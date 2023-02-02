@@ -1,3 +1,5 @@
+from typing import Union
+
 from pyteal import *
 from MesonConfig import ConfigParams as cp
 
@@ -19,5 +21,43 @@ from MesonConfig import ConfigParams as cp
 # index(start-end): 0x | 0:1 | 1:6 | 6:16 | 16:21 | 21:26 | 26:28 | 28:29 | 29:31 | 31:32
 # index(start-length): 0x | 0,1 | 1,5 | 6,10 | 16,5 | 21,5 | 26,2 | 28,1 | 29,2 | 31,1
 
-def _versionFrom(encodedSwap: Bytes) -> Int:
-    return Btoi(Substring(encodedSwap, Int(0), Int(1)))
+
+def itemFrom(
+    item: str,
+    encodedSwap: Bytes,
+) -> Int:
+    match item:             # match-case sentence is a new feature of python==3.10
+        case 'version':     content = Substring(encodedSwap, Int(0), Int(1))
+        case 'amount':      content = Substring(encodedSwap, Int(1), Int(6))
+        case 'salt':        content = Substring(encodedSwap, Int(6), Int(16))
+        case 'saltUsing':   content = Substring(encodedSwap, Int(6), Int(7))
+        case 'saltData':    content = Substring(encodedSwap, Int(8), Int(16))
+        case 'feeForLP':    content = Substring(encodedSwap, Int(16), Int(21))
+        case 'expireTs':    content = Substring(encodedSwap, Int(21), Int(26))
+        case 'outChain':    content = Substring(encodedSwap, Int(26), Int(28))
+        case 'outToken':    content = Substring(encodedSwap, Int(28), Int(29))
+        case 'inChain':     content = Substring(encodedSwap, Int(29), Int(31))
+        case 'inToken':     content = Substring(encodedSwap, Int(31), Int(32))
+        case _:             assert False
+
+    return Btoi(content)
+
+
+def serviceFee(encodedSwap: Bytes) -> Int:
+    return itemFrom('amount', encodedSwap) * cp.SERVICE_FEE_RATE / Int(10_000)
+
+
+def _willTransferToContract(encodedSwap: Bytes) -> Int:
+    saltUsing = itemFrom('saltUsing', encodedSwap)
+    return (saltUsing & Int(0x80) == Int(0))
+
+
+def _feeWaived(encodedSwap: Bytes) -> Int:
+    saltUsing = itemFrom('saltUsing', encodedSwap)
+    return (saltUsing & Int(0x40) > Int(0))
+
+
+def _signNonTyped(encodedSwap: Bytes) -> Int:
+    saltUsing = itemFrom('saltUsing', encodedSwap)
+    return (saltUsing & Int(0x08) > Int(0))
+
