@@ -3,21 +3,21 @@
 // [] function _transferToContract(
 // [] function _unsafeDepositToken(
 // [] function _needAdjustAmount(uint8 tokenIndex) internal pure returns (bool) {
-// [] function _getSwapId(uint256 encodedSwap, address initiator) internal pure returns (bytes32) {
-// [✅] function _versionFrom(uint256 encodedSwap) internal pure returns (uint8) {
-// [✅] function _amountFrom(uint256 encodedSwap) internal pure returns (uint256) {
-// [✅] function _serviceFee(uint256 encodedSwap) internal pure returns (uint256) {
-// [✅] function _feeForLp(uint256 encodedSwap) internal pure returns (uint256) {
-// [✅] function _saltFrom(uint256 encodedSwap) internal pure returns (uint80) {
-// [✅] function _saltDataFrom(uint256 encodedSwap) internal pure returns (uint64) {
-// [✅] function _willTransferToContract(uint256 encodedSwap) internal pure returns (bool) {
-// [✅] function _feeWaived(uint256 encodedSwap) internal pure returns (bool) {
-// [✅] function _signNonTyped(uint256 encodedSwap) internal pure returns (bool) {
-// [✅] function _expireTsFrom(uint256 encodedSwap) internal pure returns (uint256) {
-// [✅] function _inChainFrom(uint256 encodedSwap) internal pure returns (uint16) {
-// [✅] function _inTokenIndexFrom(uint256 encodedSwap) internal pure returns (uint8) {
-// [✅] function _outChainFrom(uint256 encodedSwap) internal pure returns (uint16) {
-// [✅] function _outTokenIndexFrom(uint256 encodedSwap) internal pure returns (uint8) {
+// [🔵] function _getSwapId(uint256 encodedSwap, address initiator) internal pure returns (bytes32) {
+// [🟢] function _versionFrom(uint256 encodedSwap) internal pure returns (uint8) {
+// [🟢] function _amountFrom(uint256 encodedSwap) internal pure returns (uint256) {
+// [🟢] function _serviceFee(uint256 encodedSwap) internal pure returns (uint256) {
+// [🟢] function _feeForLp(uint256 encodedSwap) internal pure returns (uint256) {
+// [🟢] function _saltFrom(uint256 encodedSwap) internal pure returns (uint80) {
+// [🟢] function _saltDataFrom(uint256 encodedSwap) internal pure returns (uint64) {
+// [🟢] function _willTransferToContract(uint256 encodedSwap) internal pure returns (bool) {
+// [🟢] function _feeWaived(uint256 encodedSwap) internal pure returns (bool) {
+// [🟢] function _signNonTyped(uint256 encodedSwap) internal pure returns (bool) {
+// [🟢] function _expireTsFrom(uint256 encodedSwap) internal pure returns (uint256) {
+// [🟢] function _inChainFrom(uint256 encodedSwap) internal pure returns (uint16) {
+// [🟢] function _inTokenIndexFrom(uint256 encodedSwap) internal pure returns (uint8) {
+// [🟢] function _outChainFrom(uint256 encodedSwap) internal pure returns (uint16) {
+// [🟢] function _outTokenIndexFrom(uint256 encodedSwap) internal pure returns (uint8) {
 // [] function _poolTokenIndexForOutToken(uint256 encodedSwap, uint40 poolIndex)
 // [] function _initiatorFromPosted(uint200 postedSwap) internal pure returns (address) {
 // [] function _poolIndexFromPosted(uint200 postedSwap) internal pure returns (uint40) {
@@ -27,5 +27,8 @@
 // [] function _poolTokenIndexFrom(uint8 tokenIndex, uint40 poolIndex) internal pure returns (uint48) {
 // [] function _tokenIndexFrom(uint48 poolTokenIndex) internal pure returns (uint8) {
 // [] function _poolIndexFrom(uint48 poolTokenIndex) internal pure returns (uint40) {
-// [] function _checkRequestSignature(
-// [] function _checkReleaseSignature(
+// [🟠] function _checkRequestSignature(
+// [🟠] function _checkReleaseSignature(
+
+// Rebuild solidity function in pyteal:
+//  ✅ means `done`, 🟢 or 🔵 means `wait for test`, 🟠 means `pending`.

@@ -43,21 +43,68 @@ def itemFrom(
     return Btoi(content)
 
 
-def serviceFee(encodedSwap: Bytes) -> Int:
-    return itemFrom('amount', encodedSwap) * cp.SERVICE_FEE_RATE / Int(10_000)
-
-
-def _willTransferToContract(encodedSwap: Bytes) -> Int:
+def extraItemFrom(
+    extraItem: str,
+    encodedSwap: Bytes,
+) -> Int:
     saltUsing = itemFrom('saltUsing', encodedSwap)
-    return (saltUsing & Int(0x80) == Int(0))
+    match extraItem:
+        case '_serviceFee':         
+            content = itemFrom('amount', encodedSwap) * cp.SERVICE_FEE_RATE / Int(10_000)
+        case '_willTransferToContract':
+            content = (saltUsing & Int(0x80) == Int(0))
+        case '_feeWaived':
+            content = (saltUsing & Int(0x40) > Int(0))
+        case '_signNonTyped':
+            content = (saltUsing & Int(0x08) > Int(0))
+            
+    return content
+        
+
+# `abi.encode` in solidity:
+# (uint256 10, address 0x7A58c0Be72BE218B41C608b7Fe7C5bB630736C71, string "0xAA", uint[2] [5, 6])
+#  -> 0x
+# 000000000000000000000000000000000000000000000000000000000000000a
+# 0000000000000000000000007a58c0be72be218b41c608b7fe7c5bb630736c71
+# 00000000000000000000000000000000000000000000000000000000000000a0
+# 0000000000000000000000000000000000000000000000000000000000000005
+# 0000000000000000000000000000000000000000000000000000000000000006
+# 0000000000000000000000000000000000000000000000000000000000000004
+# 3078414100000000000000000000000000000000000000000000000000000000
+
+# `abi.encodePacked` in solidity:
+# (uint256 10, address 0x7A58c0Be72BE218B41C608b7Fe7C5bB630736C71, string "0xAA", uint[2] [5, 6])
+#  -> 0x
+# 000000000000000000000000000000000000000000000000000000000000000a
+# 7a58c0be72be218b41c608b7fe7c5bb630736c71
+# 30784141
+# 0000000000000000000000000000000000000000000000000000000000000005
+# 0000000000000000000000000000000000000000000000000000000000000006
+
+def getSwapId(
+    encodedSwap: Bytes,
+    initiator: Bytes,
+):
+    return Keccak256(Concat(encodedSwap, initiator))
 
 
-def _feeWaived(encodedSwap: Bytes) -> Int:
-    saltUsing = itemFrom('saltUsing', encodedSwap)
-    return (saltUsing & Int(0x40) > Int(0))
+def checkRequestSignature(
+    encodedSwap: Bytes,
+    r_s: Int,
+    v: Int,
+    signer: Bytes,
+) -> Int:
+    # todo
+    return Int(1)
 
 
-def _signNonTyped(encodedSwap: Bytes) -> Int:
-    saltUsing = itemFrom('saltUsing', encodedSwap)
-    return (saltUsing & Int(0x08) > Int(0))
+def checkReleaseSignature(
+    encodedSwap: Bytes,
+    recipient: Bytes,
+    r_s: Int,
+    v: Int,
+    signer: Bytes,
+) -> Int:
+    # todo
+    return Int(1)
 
