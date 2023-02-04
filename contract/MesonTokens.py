@@ -51,68 +51,7 @@ if __name__ == '__main__':
             ]
         )
     
-    import base64
-    from algosdk import account, mnemonic, logic
-    from algosdk.v2client import algod
-    from algosdk.future import transaction
-    
-    TESTNET_ALGOD_RPC = "https://testnet-api.algonode.network"
-    ALGOD_TOKEN = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-    algod_client = algod.AlgodClient(ALGOD_TOKEN, TESTNET_ALGOD_RPC)
-    sp_func = algod_client.suggested_params
-    on_complete_param = transaction.OnComplete.NoOpOC
-    
-    def compile_program(client, source_code):
-        compile_response = client.compile(source_code)
-        return base64.b64decode(compile_response['result'])
-
-    def submit_transaction(private_key: str, unsigned_txn: transaction.Transaction):
-        signed_txn = unsigned_txn.sign(private_key)
-        txid = algod_client.send_transaction(signed_txn)
-        print("Signed transaction with txID: {}".format(txid))
-        confirmed_txn = transaction.wait_for_confirmation(algod_client, txid, 3)
-        print("Confirmed on round {}!".format(confirmed_txn['confirmed-round']))
-        transaction_response = algod_client.pending_transaction_info(txid)
-        return transaction_response
-    
-    mesontoken_program = compile_program(algod_client, teal_sentences := compileTeal(
-        mesontoken_program_func(), Mode.Application, version=8
-    ))
-    blank_program = compile_program(algod_client, compileTeal(
-        Return(Int(1)), Mode.Application, version=8
-    ))
-
-    mnemonic_1 = open("../wallet_1").read().replace(',', ' ')
-
-    alice_private_key = mnemonic.to_private_key(mnemonic_1)
-    alice_address = account.address_from_private_key(alice_private_key)
-    
-    create_app_tx = submit_transaction(alice_private_key, transaction.ApplicationCreateTxn(
-        alice_address, sp_func(), on_complete_param, mesontoken_program, blank_program,
-        transaction.StateSchema(5, 5), transaction.StateSchema(0, 0)
-    ))
-    print("Create app success! Application id:", (application_index := create_app_tx['application-index']))
-    application_address = logic.get_application_address(application_index)
-    
-    submit_transaction(
-        alice_private_key,
-        transaction.ApplicationCallTxn(
-            alice_address,
-            sp_func(),
-            application_index,
-            on_complete_param,
-            app_args=['addSupportToken', 154401396, 1],
-        ),
-    )
-    
-    submit_transaction(
-        alice_private_key,
-        transaction.ApplicationCallTxn(
-            alice_address,
-            sp_func(),
-            application_index,
-            on_complete_param,
-            app_args=['addSupportToken', 0x183301, 3],
-        ),
-    )
-    
+    from test_run import TealApp
+    ta = TealApp()
+    ta.create_app(mesontoken_program_func, 'mesontokens.teal', [5, 5, 0, 0])
+    ta.call_app(['addSupportToken', 0x183301, 3])

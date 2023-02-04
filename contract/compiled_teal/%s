@@ -1,0 +1,56 @@
+#pragma version 8
+txn ApplicationID
+int 0
+==
+bnz main_l6
+txn OnCompletion
+int NoOp
+==
+bnz main_l3
+err
+main_l3:
+txna ApplicationArgs 0
+byte "addSupportToken"
+==
+bnz main_l5
+err
+main_l5:
+txna ApplicationArgs 2
+btoi
+int 0
+!=
+assert
+txna ApplicationArgs 1
+btoi
+int 0
+!=
+assert
+byte "EnumIndex:"
+txna ApplicationArgs 2
+concat
+app_global_get
+int 0
+==
+assert
+byte "TokenIndex:"
+txna ApplicationArgs 1
+concat
+app_global_get
+int 0
+==
+assert
+byte "EnumIndex:"
+txna ApplicationArgs 2
+concat
+txna ApplicationArgs 1
+app_global_put
+byte "TokenIndex:"
+txna ApplicationArgs 1
+concat
+txna ApplicationArgs 2
+app_global_put
+int 1
+return
+main_l6:
+int 1
+return
