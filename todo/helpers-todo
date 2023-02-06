@@ -1,8 +1,9 @@
-// [] function getShortCoinType() external pure returns (bytes2) {
-// [] function _safeTransfer(
-// [] function _transferToContract(
-// [] function _unsafeDepositToken(
-// [] function _needAdjustAmount(uint8 tokenIndex) internal pure returns (bool) {
+// [🔴] function getShortCoinType() external pure returns (bytes2) {
+// [🟢] function _safeTransfer(
+// [🟠] function _transferToContract(
+// [🔴] function _unsafeDepositToken(
+// [++] validateTokenReceived
+// [🟢] function _needAdjustAmount(uint8 tokenIndex) internal pure returns (bool) {
 // [🔵] function _getSwapId(uint256 encodedSwap, address initiator) internal pure returns (bytes32) {
 // [🟢] function _versionFrom(uint256 encodedSwap) internal pure returns (uint8) {
 // [🟢] function _amountFrom(uint256 encodedSwap) internal pure returns (uint256) {
@@ -31,4 +32,4 @@
 // [🟠] function _checkReleaseSignature(
 
 // Rebuild solidity function in pyteal:
-//  ✅ means `done`, 🟢 or 🔵 means `wait for test`, 🟠 means `pending`.
+//  ✅ means `done`, 🟢 or 🔵 means `wait for test`, 🟠 means `pending`, 🔴 means `discard`.

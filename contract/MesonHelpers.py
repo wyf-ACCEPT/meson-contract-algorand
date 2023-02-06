@@ -4,6 +4,59 @@ from pyteal import *
 from MesonConfig import ConfigParams as cp
 
 
+# ---------------------------------- transfer and deposit ----------------------------------
+def safeTransfer(
+    tokenIndex: Int,
+    recipient: Bytes,
+    amount: Int,
+    enumIndex: Int,
+) -> Int:
+    amount_adjust: Int = ScratchVar(TealType.uint64)
+    return Seq(
+        If(
+            needAdjustAmount(enumIndex) == Int(1),
+            amount_adjust.store(amount * Int(1_000_000_000_000)),
+            amount_adjust.store(amount),
+        ),
+        InnerTxnBuilder.Begin(),
+        InnerTxnBuilder.SetFields(
+            {
+                TxnField.type_enum: TxnType.AssetTransfer,
+                TxnField.xfer_asset: tokenIndex,
+                TxnField.asset_receiver: recipient,
+                TxnField.asset_amount: amount_adjust.load(),
+            }
+        ),
+        InnerTxnBuilder.Submit(),
+    )
+
+
+# transferToContract: todo
+# unsafeDepositToken: discard
+
+def validateTokenReceived(
+    txid: Int,
+    tokenIndex: Int,
+    amount: Int,
+    enumIndex: Int,
+) -> Int:
+    amount_adjust: Int = ScratchVar(TealType.uint64)
+    return Seq(
+        Assert(amount > Int(0)),
+        If(
+            needAdjustAmount(enumIndex) == Int(1),
+            amount_adjust.store(amount * Int(1_000_000_000_000)),
+            amount_adjust.store(amount),
+        ),
+        And(
+            Gtxn[txid].type_enum() == TxnType.AssetTransfer,
+            Gtxn[txid].sender() == Txn.sender(),
+            Gtxn[txid].asset_receiver() == Global.current_application_address(),
+            Gtxn[txid].xfer_asset() == tokenIndex,
+            Gtxn[txid].asset_amount() == amount,
+        ),
+    )
+
 
 
 # ---------------------------------- encodedSwap processing ----------------------------------
@@ -26,19 +79,31 @@ def itemFrom(
     item: str,
     encodedSwap: Bytes,
 ) -> Int:
-    match item:             # match-case sentence is a new feature of python==3.10
-        case 'version':     content = Substring(encodedSwap, Int(0), Int(1))
-        case 'amount':      content = Substring(encodedSwap, Int(1), Int(6))
-        case 'salt':        content = Substring(encodedSwap, Int(6), Int(16))
-        case 'saltUsing':   content = Substring(encodedSwap, Int(6), Int(7))
-        case 'saltData':    content = Substring(encodedSwap, Int(8), Int(16))
-        case 'feeForLP':    content = Substring(encodedSwap, Int(16), Int(21))
-        case 'expireTs':    content = Substring(encodedSwap, Int(21), Int(26))
-        case 'outChain':    content = Substring(encodedSwap, Int(26), Int(28))
-        case 'outToken':    content = Substring(encodedSwap, Int(28), Int(29))
-        case 'inChain':     content = Substring(encodedSwap, Int(29), Int(31))
-        case 'inToken':     content = Substring(encodedSwap, Int(31), Int(32))
-        case _:             assert False
+    match item:  # match-case sentence is a new feature of python==3.10
+        case "version":
+            content = Substring(encodedSwap, Int(0), Int(1))
+        case "amount":
+            content = Substring(encodedSwap, Int(1), Int(6))
+        case "salt":
+            content = Substring(encodedSwap, Int(6), Int(16))
+        case "saltUsing":
+            content = Substring(encodedSwap, Int(6), Int(7))
+        case "saltData":
+            content = Substring(encodedSwap, Int(8), Int(16))
+        case "feeForLP":
+            content = Substring(encodedSwap, Int(16), Int(21))
+        case "expireTs":
+            content = Substring(encodedSwap, Int(21), Int(26))
+        case "outChain":
+            content = Substring(encodedSwap, Int(26), Int(28))
+        case "outToken":
+            content = Substring(encodedSwap, Int(28), Int(29))
+        case "inChain":
+            content = Substring(encodedSwap, Int(29), Int(31))
+        case "inToken":
+            content = Substring(encodedSwap, Int(31), Int(32))
+        case _:
+            assert False
 
     return Btoi(content)
 
@@ -47,19 +112,38 @@ def extraItemFrom(
     extraItem: str,
     encodedSwap: Bytes,
 ) -> Int:
-    saltUsing = itemFrom('saltUsing', encodedSwap)
+    saltUsing = itemFrom("saltUsing", encodedSwap)
     match extraItem:
-        case '_serviceFee':         
-            content = itemFrom('amount', encodedSwap) * cp.SERVICE_FEE_RATE / Int(10_000)
-        case '_willTransferToContract':
-            content = (saltUsing & Int(0x80) == Int(0))
-        case '_feeWaived':
-            content = (saltUsing & Int(0x40) > Int(0))
-        case '_signNonTyped':
-            content = (saltUsing & Int(0x08) > Int(0))
-            
+        case "_serviceFee":
+            content = (
+                itemFrom("amount", encodedSwap) * cp.SERVICE_FEE_RATE / Int(10_000)
+            )
+        case "_willTransferToContract":
+            content = saltUsing & Int(0x80) == Int(0)
+        case "_feeWaived":
+            content = saltUsing & Int(0x40) > Int(0)
+        case "_signNonTyped":
+            content = saltUsing & Int(0x08) > Int(0)
+
     return content
-        
+
+
+
+# ---------------------------- poolToken, lockedSwap, postedSwap ----------------------------
+
+
+
+
+
+
+# ---------------------------------- other utils functions ----------------------------------
+
+#   function _needAdjustAmount(uint8 tokenIndex) internal pure returns (bool) {
+#     return tokenIndex > 32 && tokenIndex < 255;
+#   }
+def needAdjustAmount(enumIndex: Int) -> Int:
+    return And(enumIndex > Int(32), enumIndex < Int(255))
+
 
 # `abi.encode` in solidity:
 # (uint256 10, address 0x7A58c0Be72BE218B41C608b7Fe7C5bB630736C71, string "0xAA", uint[2] [5, 6])
@@ -81,12 +165,16 @@ def extraItemFrom(
 # 0000000000000000000000000000000000000000000000000000000000000005
 # 0000000000000000000000000000000000000000000000000000000000000006
 
+
 def getSwapId(
     encodedSwap: Bytes,
     initiator: Bytes,
 ):
     return Keccak256(Concat(encodedSwap, initiator))
 
+
+
+# ---------------------------------- signature ----------------------------------
 
 def checkRequestSignature(
     encodedSwap: Bytes,
@@ -107,4 +195,3 @@ def checkReleaseSignature(
 ) -> Int:
     # todo
     return Int(1)
-
