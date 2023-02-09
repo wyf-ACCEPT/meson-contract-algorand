@@ -1,5 +1,3 @@
-from typing import Union
-
 from pyteal import *
 from MesonConfig import ConfigParams as cp
 
@@ -74,7 +72,6 @@ def validateTokenReceived(
 # index(start-end): 0x | 0:1 | 1:6 | 6:16 | 16:21 | 21:26 | 26:28 | 28:29 | 29:31 | 31:32
 # index(start-length): 0x | 0,1 | 1,5 | 6,10 | 16,5 | 21,5 | 26,2 | 28,1 | 29,2 | 31,1
 
-
 def itemFrom(
     item: str,
     encodedSwap: Bytes,
@@ -131,7 +128,49 @@ def extraItemFrom(
 
 # ---------------------------- poolToken, lockedSwap, postedSwap ----------------------------
 
+# `postedSwap` in format of `initiator:address(32)|lp:address(32)|tokenIndex:uint8(1)`
+# Not the same one as in solidity!
+  
+def itemFromPosted(
+    item: str,
+    postedSwap: Bytes,
+) -> Int:
+    match item:
+        case "initiator":
+            content = Substring(postedSwap, Int(0), Int(32))
+        case "lp":
+            content = Substring(postedSwap, Int(32), Int(64))
+        case "inToken":
+            content = Substring(postedSwap, Int(64), Int(65))
+        case _:
+            assert False
+    return content
 
+# `lockedSwap` in format of `until:uint40(8)|lp:address(32)|tokenIndex:uint8(1)`
+# Not the same one as in solidity!
+
+def itemFromLocked(
+    item: str,
+    lockedSwap: Bytes, 
+) -> Int:
+    match item:
+        case "until":
+            content = Btoi(Substring(lockedSwap, Int(0), Int(5)))
+        case "lp":
+            content = Substring(lockedSwap, Int(5), Int(37))
+        case "outToken":
+            content = Substring(lockedSwap, Int(37), Int(38))
+        case _:
+            assert False
+    return content
+        
+
+def lockedSwapFrom(
+    until: Int,
+    lp: Bytes,
+    enumIndex: Int,
+) -> Bytes:
+    return Concat(Substring(until, Int(3), Int(8)), lp, Substring(enumIndex, Int(7), Int(8)))
 
 
 

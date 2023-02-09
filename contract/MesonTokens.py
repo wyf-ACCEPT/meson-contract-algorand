@@ -30,6 +30,15 @@ def getTokenIndex(enumIndex: Bytes):
     return App.globalGet(wrapTokenKeyName('EnumIndex:', enumIndex))
 
 
+def poolTokenBalance(
+    lp: Bytes,
+    enumIndex: Int,
+) -> Int:
+    tokenIndex = getTokenIndex(enumIndex)
+    return App.localGet(lp, wrapTokenKeyName('MesonLP:', tokenIndex))
+
+
+
 # getSupportedTokens: View explorer directly to get supported token list!
 
 
