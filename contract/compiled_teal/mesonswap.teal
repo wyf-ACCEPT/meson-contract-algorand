@@ -1,0 +1,124 @@
+#pragma version 8
+txn ApplicationID
+int 0
+==
+bnz main_l9
+txn OnCompletion
+int NoOp
+==
+bnz main_l3
+err
+main_l3:
+txna ApplicationArgs 0
+byte "postSwap"
+==
+bnz main_l5
+err
+main_l5:
+txna ApplicationArgs 1
+extract 1 5
+btoi
+int 100000000000
+<
+txna ApplicationArgs 1
+extract 21 5
+btoi
+txn FirstValidTime
+-
+int 3600
+>
+&&
+txna ApplicationArgs 1
+extract 21 5
+btoi
+txn FirstValidTime
+-
+int 7200
+<
+&&
+txna ApplicationArgs 4
+extract 32 32
+byte "00000000000000000000000000000000"
+==
+&&
+int 1
+&&
+txna ApplicationArgs 1
+extract 1 5
+btoi
+int 0
+>
+assert
+txna ApplicationArgs 1
+extract 31 1
+btoi
+int 32
+>
+txna ApplicationArgs 1
+extract 31 1
+btoi
+int 255
+<
+&&
+int 1
+==
+bnz main_l8
+txna ApplicationArgs 1
+extract 1 5
+btoi
+store 0
+main_l7:
+int 1
+gtxns TypeEnum
+int axfer
+==
+int 1
+gtxns Sender
+txn Sender
+==
+&&
+int 1
+gtxns AssetReceiver
+global CurrentApplicationAddress
+==
+&&
+int 1
+gtxns XferAsset
+byte "EnumIndex:"
+txna ApplicationArgs 1
+extract 31 1
+btoi
+itob
+concat
+app_global_get
+==
+&&
+int 1
+gtxns AssetAmount
+txna ApplicationArgs 1
+extract 1 5
+btoi
+==
+&&
+&&
+assert
+txna ApplicationArgs 1
+int 65
+box_create
+assert
+txna ApplicationArgs 1
+txna ApplicationArgs 4
+box_put
+int 1
+return
+main_l8:
+txna ApplicationArgs 1
+extract 1 5
+btoi
+int 1000000000000
+*
+store 0
+b main_l7
+main_l9:
+int 1
+return

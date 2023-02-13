@@ -2,14 +2,15 @@ from pyteal import *
 
 
 # Directly using global index to map:
-def addSupportToken(tokenIndex: Bytes, enumIndex: Bytes) -> Int:
+def addSupportToken(tokenIndex: Int, enumIndex: Int) -> Int:
     # todo: onlyDeployer
     
     #   Bytes('TokenIndex:17207135') -> Int(1)
     #   Bytes('EnumIndex:1') -> Int(17207135)
     return Seq(
-        Assert(Btoi(enumIndex) != Int(0)),
-        Assert(Btoi(tokenIndex) != Int(0)),
+        Assert(enumIndex < Int(256)),
+        Assert(enumIndex != Int(0)),
+        Assert(tokenIndex != Int(0)),
         Assert(App.globalGet(wrapTokenKeyName('EnumIndex:', enumIndex)) == Int(0)),
         Assert(App.globalGet(wrapTokenKeyName('TokenIndex:', tokenIndex)) == Int(0)),
         App.globalPut(wrapTokenKeyName('EnumIndex:', enumIndex), tokenIndex),
@@ -18,15 +19,15 @@ def addSupportToken(tokenIndex: Bytes, enumIndex: Bytes) -> Int:
     )
     
     
-def wrapTokenKeyName(suffix: str, index: Bytes) -> Bytes:
-    return Concat(Bytes(suffix), index)
+def wrapTokenKeyName(suffix: str, index: Int) -> Bytes:
+    return Concat(Bytes(suffix), Itob(index))
 
 
-def getEnumIndex(tokenIndex: Bytes):
+def getEnumIndex(tokenIndex: Int) -> Int:
     return App.globalGet(wrapTokenKeyName('TokenIndex:', tokenIndex))
 
 
-def getTokenIndex(enumIndex: Bytes):
+def getTokenIndex(enumIndex: Int) -> Int:
     return App.globalGet(wrapTokenKeyName('EnumIndex:', enumIndex))
 
 
@@ -54,7 +55,7 @@ if __name__ == '__main__':
                 Cond([
                     Txn.application_args[0] == Bytes("addSupportToken"),
                     addSupportToken(
-                        Txn.application_args[1], Txn.application_args[2]
+                        Btoi(Txn.application_args[1]), Btoi(Txn.application_args[2])
                     )
                 ])
             ]

@@ -1,4 +1,4 @@
-from pyteal import Int
+from pyteal import Int, Bytes
 
 class ConfigParams:
     
@@ -14,6 +14,8 @@ class ConfigParams:
     
     MAX_SWAP_AMOUNT = Int(100_000_000_000)      # 1e11 / 1e6 = $10k
     SERVICE_FEE_RATE = Int(10)
+    
+    ZERO_ADDRESS = Bytes("00000000000000000000000000000000")
     
     # ETH_SIGN_HEADER = Bytes("\x19Ethereum Signed Message:\n32");
     # ETH_SIGN_HEADER_52 = Bytes("\x19Ethereum Signed Message:\n52");

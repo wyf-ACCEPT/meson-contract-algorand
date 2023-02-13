@@ -17,6 +17,11 @@ err
 main_l5:
 txna ApplicationArgs 2
 btoi
+int 256
+<
+assert
+txna ApplicationArgs 2
+btoi
 int 0
 !=
 assert
@@ -27,6 +32,8 @@ int 0
 assert
 byte "EnumIndex:"
 txna ApplicationArgs 2
+btoi
+itob
 concat
 app_global_get
 int 0
@@ -34,6 +41,8 @@ int 0
 assert
 byte "TokenIndex:"
 txna ApplicationArgs 1
+btoi
+itob
 concat
 app_global_get
 int 0
@@ -41,13 +50,19 @@ int 0
 assert
 byte "EnumIndex:"
 txna ApplicationArgs 2
+btoi
+itob
 concat
 txna ApplicationArgs 1
+btoi
 app_global_put
 byte "TokenIndex:"
 txna ApplicationArgs 1
+btoi
+itob
 concat
 txna ApplicationArgs 2
+btoi
 app_global_put
 int 1
 return

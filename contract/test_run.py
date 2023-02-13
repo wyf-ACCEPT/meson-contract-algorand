@@ -41,7 +41,7 @@ class TealApp:
             Return(Int(1)), Mode.Application, version=8
         ))
         if write_to_file:
-            open('./compiled_teal/%s', 'w').write(teal_sentences)
+            open('./compiled_teal/%s' % write_to_file, 'w').write(teal_sentences)
 
         create_app_tx = self.submit_transaction(
             self.alice_private_key, 
