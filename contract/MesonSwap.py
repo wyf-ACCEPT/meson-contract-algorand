@@ -5,7 +5,7 @@ from MesonHelpers import *
 from MesonTokens import *
 
 
-# Different to the one in solidity, this `postSwap` can only called by user!
+# Step 1.1: Different to the one in solidity, this `postSwap` can only called by user!
 def postSwap(
     encodedSwap: Bytes,
     r_s: Int,
@@ -13,6 +13,7 @@ def postSwap(
     postingValue: Bytes,
 ) -> Int:
     inChain = itemFrom('inChain', encodedSwap)
+    version = itemFrom('version', encodedSwap)
     amount = itemFrom('amount', encodedSwap)
     delta = itemFrom('expireTs', encodedSwap) - Txn.first_valid_time()
     initiator = itemFromPosted('initiator', postingValue)
@@ -21,7 +22,8 @@ def postSwap(
     tokenIndexIn = getTokenIndex(enumIndexIn)
     
     conditions = And(
-        # inChain == cp.SHORT_COIN_TYPE,
+        inChain == cp.SHORT_COIN_TYPE,
+        version == cp.MESON_PROTOCOL_VERSION,
         amount < cp.MAX_SWAP_AMOUNT,
         delta > cp.MIN_BOND_TIME_PERIOD,
         delta < cp.MAX_BOND_TIME_PERIOD,
@@ -40,6 +42,18 @@ def postSwap(
     )
 
 
+# Step 1.2: After user called `postSwap`, the lp should call `bondSwap`.
+def bondSwap(encodedSwap: Bytes):
+    return Seq(
+        postedSwap_get := App.box_get(encodedSwap),
+        Assert(postedSwap_get.hasValue()),
+        Assert(itemFromPosted('lp', postedSwap_get.value()) == cp.ZERO_ADDRESS),
+        App.box_replace(encodedSwap, Int(32), Txn.sender()),
+        Approve()
+    )
+    
+
+
 # -------------------------------------- For Test --------------------------------------
 if __name__ == '__main__':
     
@@ -56,6 +70,9 @@ if __name__ == '__main__':
                         Btoi(Txn.application_args[3]),
                         Txn.application_args[4],
                     )
+                ], [
+                    Txn.application_args[0] == Bytes("bondSwap"),
+                    bondSwap(Txn.application_args[1]),
                 ])
             ]
         )

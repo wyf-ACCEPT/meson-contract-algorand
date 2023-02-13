@@ -2,7 +2,7 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l9
+bnz main_l11
 txn OnCompletion
 int NoOp
 ==
@@ -12,14 +12,47 @@ main_l3:
 txna ApplicationArgs 0
 byte "postSwap"
 ==
-bnz main_l5
+bnz main_l7
+txna ApplicationArgs 0
+byte "bondSwap"
+==
+bnz main_l6
 err
-main_l5:
+main_l6:
+txna ApplicationArgs 1
+box_get
+store 2
+store 1
+load 2
+assert
+load 1
+byte "00000000000000000000000000000000"
+==
+load 1
+byte "123456"
+==
+&&
+assert
+int 1
+return
+main_l7:
+txna ApplicationArgs 1
+extract 29 2
+btoi
+int 283
+==
+txna ApplicationArgs 1
+extract 0 1
+btoi
+int 1
+==
+&&
 txna ApplicationArgs 1
 extract 1 5
 btoi
 int 100000000000
 <
+&&
 txna ApplicationArgs 1
 extract 21 5
 btoi
@@ -62,12 +95,12 @@ int 255
 &&
 int 1
 ==
-bnz main_l8
+bnz main_l10
 txna ApplicationArgs 1
 extract 1 5
 btoi
 store 0
-main_l7:
+main_l9:
 int 1
 gtxns TypeEnum
 int axfer
@@ -111,14 +144,14 @@ txna ApplicationArgs 4
 box_put
 int 1
 return
-main_l8:
+main_l10:
 txna ApplicationArgs 1
 extract 1 5
 btoi
 int 1000000000000
 *
 store 0
-b main_l7
-main_l9:
+b main_l9
+main_l11:
 int 1
 return

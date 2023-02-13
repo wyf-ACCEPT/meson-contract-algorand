@@ -5,7 +5,7 @@ class ConfigParams:
     def __init__(self):
         pass
     
-    MESON_PROTOCOL_VERSION = Int(1)
+    MESON_PROTOCOL_VERSION = Int(1)             # version 1
     MIN_BOND_TIME_PERIOD = Int(3600)            # 1 hour
     MAX_BOND_TIME_PERIOD = Int(7200)            # 2 hours
     LOCK_TIME_PERIOD = Int(1200)                # 20 minutes
