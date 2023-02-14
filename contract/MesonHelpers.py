@@ -133,7 +133,7 @@ def extraItemFrom(
   
 def itemFromPosted(
     item: str,
-    postedSwap: Bytes,
+    postedSwap: Bytes,      # Bytes(65)
 ) -> Int:
     match item:
         case "initiator":
@@ -151,7 +151,7 @@ def itemFromPosted(
 
 def itemFromLocked(
     item: str,
-    lockedSwap: Bytes, 
+    lockedSwap: Bytes,      # Bytes(41)
 ) -> Int:
     match item:
         case "until":
@@ -170,7 +170,11 @@ def lockedSwapFrom(
     lp: Bytes,
     enumIndex: Int,
 ) -> Bytes:
-    return Concat(Substring(until, Int(3), Int(8)), lp, Substring(enumIndex, Int(7), Int(8)))
+    return Concat(
+        Substring(Itob(until), Int(3), Int(8)), 
+        lp, 
+        Substring(Itob(enumIndex), Int(7), Int(8))
+    )
 
 
 
@@ -208,7 +212,7 @@ def needAdjustAmount(enumIndex: Int) -> Int:
 def getSwapId(
     encodedSwap: Bytes,
     initiator: Bytes,
-):
+) -> Bytes:         # Bytes(32)
     return Keccak256(Concat(encodedSwap, initiator))
 
 
