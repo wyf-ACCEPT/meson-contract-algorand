@@ -5,6 +5,12 @@ from MesonHelpers import *
 from MesonTokens import *
 
 
+def initPools() -> Int:
+    return Seq(
+        Approve()
+    )
+
+
 def depositAndRegister(
     amount: Int,
     tokenIndex: Int,
@@ -68,10 +74,9 @@ def lock(
     v: Int,
     initiator: Bytes,
 ) -> Int:
-    
     outChain = itemFrom('outChain', encodedSwap)
     version = itemFrom('version', encodedSwap)
-    amount = itemFrom('amount', encodedSwap) - itemFrom('feeForLP', encodedSwap)
+    lockAmount = itemFrom('amount', encodedSwap) - itemFrom('feeForLP', encodedSwap)
     expireTs = itemFrom('expireTs', encodedSwap)
     until = Txn.first_valid_time() + cp.LOCK_TIME_PERIOD
     swapId = getSwapId(encodedSwap, initiator)
@@ -85,19 +90,72 @@ def lock(
         version == cp.MESON_PROTOCOL_VERSION,
         until < expireTs - Int(300),        # 5 minutes     # todo: check if it's 300 or 300,000
         checkRequestSignature(encodedSwap, r_s, v, initiator),
-        poolTokenBalance(lp, enumIndexOut) > amount,
+        poolTokenBalance(lp, enumIndexOut) > lockAmount,
     )
     
     return Seq(
         Assert(conditions),
         App.localPut(
             lp, wrapTokenKeyName('MesonLP:', tokenIndexOut), 
-            poolTokenBalance(lp, enumIndexOut) - amount
+            poolTokenBalance(lp, enumIndexOut) - lockAmount
         ),
         Assert(App.box_create(swapId, Int(41))),
         App.box_put(swapId, lockedSwap),
         Approve()
     )
+
+
+
+# Step 3. 
+def release(
+    encodedSwap: Bytes,
+    r_s: Int,
+    v: Int,
+    initiator: Bytes,
+    recipient: Bytes,
+) -> Int:
+            # todo: Txn.sender() == <tx.origin>?
+            # todo: _onlyPremiumManager
+    feeWaived = extraItemFrom('_feeWaived', encodedSwap)
+    expireTs = itemFrom('expireTs', encodedSwap)
+    swapId = getSwapId(encodedSwap, initiator)
+    lp = Txn.sender()
+    currentAddr = Global.current_application_address()
+    enumIndexOut = itemFrom('outToken', encodedSwap)
+    tokenIndexOut = getTokenIndex(enumIndexOut)
+    serviceFee = extraItemFrom('_serviceFee', encodedSwap)
+    releaseAmount = ScratchVar(TealType.uint64)
+    
+    conditions = And(
+        Seq(
+            lockedSwap_get := App.box_get(swapId),
+            Assert(lockedSwap_get.hasValue()),
+            lockedSwap_get.value() != cp.LOCKED_SWAP_FINISH
+        ),
+        recipient != cp.ZERO_ADDRESS,
+        expireTs > Txn.first_valid_time(),
+        checkReleaseSignature(encodedSwap, recipient, r_s, v, initiator),
+    )
+    
+    return Seq(
+        Assert(conditions),
+        App.box_put(swapId, cp.LOCKED_SWAP_FINISH),
+        releaseAmount.store(itemFrom('amount', encodedSwap) - itemFrom('feeForLP', encodedSwap)),
+        If(
+            Not(feeWaived),
+            Seq(
+                releaseAmount.store(releaseAmount.load() - serviceFee),
+                App.localPut(
+                    currentAddr, 
+                    wrapTokenKeyName('MesonLP:', tokenIndexOut), 
+                    poolTokenBalance(currentAddr, enumIndexOut) + serviceFee
+                ),
+            )
+        ),          # todo: transferToContract
+        safeTransfer(tokenIndexOut, recipient, releaseAmount.load(), enumIndexOut),    
+        Approve()
+    )
+
     
 
 
@@ -116,6 +174,15 @@ if __name__ == '__main__':
                         Btoi(Txn.application_args[2]),
                         Btoi(Txn.application_args[3]),
                         Txn.application_args[4],
+                    )
+                ], [
+                    Txn.application_args[0] == Bytes("release"),
+                    release(
+                        Txn.application_args[1], 
+                        Btoi(Txn.application_args[2]),
+                        Btoi(Txn.application_args[3]),
+                        Txn.application_args[4],
+                        Txn.application_args[5],
                     )
                 ])
             ]

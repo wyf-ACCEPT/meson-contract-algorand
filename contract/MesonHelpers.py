@@ -8,7 +8,7 @@ def safeTransfer(
     recipient: Bytes,
     amount: Int,
     enumIndex: Int,
-) -> Int:
+):
     amount_adjust: Int = ScratchVar(TealType.uint64)
     return Seq(
         If(
@@ -112,9 +112,7 @@ def extraItemFrom(
     saltUsing = itemFrom("saltUsing", encodedSwap)
     match extraItem:
         case "_serviceFee":
-            content = (
-                itemFrom("amount", encodedSwap) * cp.SERVICE_FEE_RATE / Int(10_000)
-            )
+            content = itemFrom("amount", encodedSwap) * cp.SERVICE_FEE_RATE / Int(10_000)
         case "_willTransferToContract":
             content = saltUsing & Int(0x80) == Int(0)
         case "_feeWaived":

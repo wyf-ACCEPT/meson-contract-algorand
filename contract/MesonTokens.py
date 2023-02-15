@@ -15,6 +15,11 @@ def addSupportToken(tokenIndex: Int, enumIndex: Int) -> Int:
         Assert(App.globalGet(wrapTokenKeyName('TokenIndex:', tokenIndex)) == Int(0)),
         App.globalPut(wrapTokenKeyName('EnumIndex:', enumIndex), tokenIndex),
         App.globalPut(wrapTokenKeyName('TokenIndex:', tokenIndex), enumIndex),
+        App.localPut(
+            Global.current_application_address(), 
+            wrapTokenKeyName('MesonLP:', tokenIndex), 
+            Int(0)
+        ),
         Approve()
     )
     

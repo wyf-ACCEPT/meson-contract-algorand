@@ -2,7 +2,7 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l6
+bnz main_l13
 txn OnCompletion
 int NoOp
 ==
@@ -12,9 +12,148 @@ main_l3:
 txna ApplicationArgs 0
 byte "lock"
 ==
-bnz main_l5
+bnz main_l12
+txna ApplicationArgs 0
+byte "release"
+==
+bnz main_l6
 err
-main_l5:
+main_l6:
+txna ApplicationArgs 1
+txna ApplicationArgs 4
+concat
+keccak256
+box_get
+store 2
+store 1
+load 2
+assert
+load 1
+byte 0x1111111111111111111111111111111111111111111111111111111111111111111111111111111111
+!=
+txna ApplicationArgs 5
+byte 0x0000000000000000000000000000000000000000000000000000000000000000
+!=
+&&
+txna ApplicationArgs 1
+extract 21 5
+btoi
+txn FirstValidTime
+>
+&&
+int 1
+&&
+assert
+txna ApplicationArgs 1
+txna ApplicationArgs 4
+concat
+keccak256
+byte 0x1111111111111111111111111111111111111111111111111111111111111111111111111111111111
+box_put
+txna ApplicationArgs 1
+extract 1 5
+btoi
+txna ApplicationArgs 1
+extract 16 5
+btoi
+-
+store 0
+txna ApplicationArgs 1
+extract 6 1
+btoi
+int 64
+&
+int 0
+>
+!
+bnz main_l11
+main_l7:
+txna ApplicationArgs 1
+extract 28 1
+btoi
+int 32
+>
+txna ApplicationArgs 1
+extract 28 1
+btoi
+int 255
+<
+&&
+int 1
+==
+bnz main_l10
+load 0
+store 3
+main_l9:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+byte "EnumIndex:"
+txna ApplicationArgs 1
+extract 28 1
+btoi
+itob
+concat
+app_global_get
+itxn_field XferAsset
+txna ApplicationArgs 5
+itxn_field AssetReceiver
+load 3
+itxn_field AssetAmount
+itxn_submit
+int 1
+return
+main_l10:
+load 0
+int 1000000000000
+*
+store 3
+b main_l9
+main_l11:
+load 0
+txna ApplicationArgs 1
+extract 1 5
+btoi
+int 10
+*
+int 10000
+/
+-
+store 0
+global CurrentApplicationAddress
+byte "MesonLP:"
+byte "EnumIndex:"
+txna ApplicationArgs 1
+extract 28 1
+btoi
+itob
+concat
+app_global_get
+itob
+concat
+global CurrentApplicationAddress
+byte "MesonLP:"
+byte "EnumIndex:"
+txna ApplicationArgs 1
+extract 28 1
+btoi
+itob
+concat
+app_global_get
+itob
+concat
+app_local_get
+txna ApplicationArgs 1
+extract 1 5
+btoi
+int 10
+*
+int 10000
+/
++
+app_local_put
+b main_l7
+main_l12:
 txna ApplicationArgs 1
 extract 26 2
 btoi
@@ -119,6 +258,6 @@ concat
 box_put
 int 1
 return
-main_l6:
+main_l13:
 int 1
 return
