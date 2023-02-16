@@ -17,6 +17,7 @@ class ConfigParams:
     
     ZERO_ADDRESS = Bytes(bytes.fromhex('00' * 32))          # 32 bytes
     LOCKED_SWAP_FINISH = Bytes(bytes.fromhex('11' * 41))    # 41 bytes
+    POSTED_SWAP_EXPIRE = Bytes(bytes.fromhex('11' * 65))    # 65 bytes
     
     # ETH_SIGN_HEADER = Bytes("\x19Ethereum Signed Message:\n32");
     # ETH_SIGN_HEADER_52 = Bytes("\x19Ethereum Signed Message:\n52");

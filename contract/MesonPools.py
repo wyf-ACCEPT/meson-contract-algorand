@@ -119,7 +119,6 @@ def release(
     feeWaived = extraItemFrom('_feeWaived', encodedSwap)
     expireTs = itemFrom('expireTs', encodedSwap)
     swapId = getSwapId(encodedSwap, initiator)
-    lp = Txn.sender()
     currentAddr = Global.current_application_address()
     enumIndexOut = itemFrom('outToken', encodedSwap)
     tokenIndexOut = getTokenIndex(enumIndexOut)

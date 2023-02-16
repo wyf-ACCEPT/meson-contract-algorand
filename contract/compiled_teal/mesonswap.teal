@@ -2,7 +2,7 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l11
+bnz main_l22
 txn OnCompletion
 int NoOp
 ==
@@ -12,13 +12,131 @@ main_l3:
 txna ApplicationArgs 0
 byte "postSwap"
 ==
-bnz main_l7
+bnz main_l18
 txna ApplicationArgs 0
 byte "bondSwap"
 ==
-bnz main_l6
+bnz main_l17
+txna ApplicationArgs 0
+byte "executeSwap"
+==
+bnz main_l7
 err
-main_l6:
+main_l7:
+txna ApplicationArgs 1
+box_get
+store 5
+store 4
+load 5
+assert
+load 4
+store 3
+load 3
+byte 0x1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+!=
+int 1
+&&
+assert
+txna ApplicationArgs 1
+extract 21 5
+btoi
+txn FirstValidTime
+int 3600
++
+<
+bnz main_l16
+txna ApplicationArgs 1
+byte 0x1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+box_put
+main_l9:
+txna ApplicationArgs 5
+btoi
+bnz main_l15
+txna ApplicationArgs 1
+extract 31 1
+btoi
+int 32
+>
+txna ApplicationArgs 1
+extract 31 1
+btoi
+int 255
+<
+&&
+int 1
+==
+bnz main_l14
+txna ApplicationArgs 1
+extract 1 5
+btoi
+store 6
+main_l12:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+byte "EnumIndex:"
+txna ApplicationArgs 1
+extract 31 1
+btoi
+itob
+concat
+app_global_get
+itxn_field XferAsset
+load 3
+extract 32 32
+itxn_field AssetReceiver
+load 6
+itxn_field AssetAmount
+itxn_submit
+main_l13:
+int 1
+return
+main_l14:
+txna ApplicationArgs 1
+extract 1 5
+btoi
+int 1000000000000
+*
+store 6
+b main_l12
+main_l15:
+load 3
+extract 32 32
+byte "MesonLP:"
+byte "EnumIndex:"
+txna ApplicationArgs 1
+extract 31 1
+btoi
+itob
+concat
+app_global_get
+itob
+concat
+load 3
+extract 32 32
+byte "MesonLP:"
+byte "EnumIndex:"
+txna ApplicationArgs 1
+extract 31 1
+btoi
+itob
+concat
+app_global_get
+itob
+concat
+app_local_get
+txna ApplicationArgs 1
+extract 1 5
+btoi
++
+app_local_put
+b main_l13
+main_l16:
+txna ApplicationArgs 1
+box_del
+assert
+b main_l9
+main_l17:
 txna ApplicationArgs 1
 box_get
 store 2
@@ -26,16 +144,17 @@ store 1
 load 2
 assert
 load 1
-byte "00000000000000000000000000000000"
+extract 32 32
+byte 0x0000000000000000000000000000000000000000000000000000000000000000
 ==
-load 1
-byte "123456"
-==
-&&
 assert
+txna ApplicationArgs 1
+int 32
+txn Sender
+box_replace
 int 1
 return
-main_l7:
+main_l18:
 txna ApplicationArgs 1
 extract 29 2
 btoi
@@ -71,7 +190,7 @@ int 7200
 &&
 txna ApplicationArgs 4
 extract 32 32
-byte "00000000000000000000000000000000"
+byte 0x0000000000000000000000000000000000000000000000000000000000000000
 ==
 &&
 int 1
@@ -95,12 +214,12 @@ int 255
 &&
 int 1
 ==
-bnz main_l10
+bnz main_l21
 txna ApplicationArgs 1
 extract 1 5
 btoi
 store 0
-main_l9:
+main_l20:
 int 1
 gtxns TypeEnum
 int axfer
@@ -144,14 +263,14 @@ txna ApplicationArgs 4
 box_put
 int 1
 return
-main_l10:
+main_l21:
 txna ApplicationArgs 1
 extract 1 5
 btoi
 int 1000000000000
 *
 store 0
-b main_l9
-main_l11:
+b main_l20
+main_l22:
 int 1
 return
