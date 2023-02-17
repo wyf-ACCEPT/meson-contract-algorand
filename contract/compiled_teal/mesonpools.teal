@@ -2,23 +2,43 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l13
+txn OnCompletion
+int OptIn
+==
+||
+bnz main_l17
+txn OnCompletion
+int CloseOut
+==
+txn OnCompletion
+int UpdateApplication
+==
+||
+txn OnCompletion
+int DeleteApplication
+==
+||
+bnz main_l16
 txn OnCompletion
 int NoOp
 ==
-bnz main_l3
+bnz main_l4
 err
-main_l3:
+main_l4:
+txna ApplicationArgs 0
+byte "addSupportToken"
+==
+bnz main_l15
 txna ApplicationArgs 0
 byte "lock"
 ==
-bnz main_l12
+bnz main_l14
 txna ApplicationArgs 0
 byte "release"
 ==
-bnz main_l6
+bnz main_l8
 err
-main_l6:
+main_l8:
 txna ApplicationArgs 1
 txna ApplicationArgs 4
 concat
@@ -66,8 +86,8 @@ int 64
 int 0
 >
 !
-bnz main_l11
-main_l7:
+bnz main_l13
+main_l9:
 txna ApplicationArgs 1
 extract 28 1
 btoi
@@ -81,10 +101,10 @@ int 255
 &&
 int 1
 ==
-bnz main_l10
+bnz main_l12
 load 0
 store 3
-main_l9:
+main_l11:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -103,13 +123,13 @@ itxn_field AssetAmount
 itxn_submit
 int 1
 return
-main_l10:
+main_l12:
 load 0
 int 1000000000000
 *
 store 3
-b main_l9
-main_l11:
+b main_l11
+main_l13:
 load 0
 txna ApplicationArgs 1
 extract 1 5
@@ -152,8 +172,8 @@ int 10000
 /
 +
 app_local_put
-b main_l7
-main_l12:
+b main_l9
+main_l14:
 txna ApplicationArgs 1
 extract 26 2
 btoi
@@ -258,6 +278,69 @@ concat
 box_put
 int 1
 return
-main_l13:
+main_l15:
+txna ApplicationArgs 2
+btoi
+int 256
+<
+assert
+txna ApplicationArgs 2
+btoi
+int 0
+!=
+assert
+txna ApplicationArgs 1
+btoi
+int 0
+!=
+assert
+byte "EnumIndex:"
+txna ApplicationArgs 2
+btoi
+itob
+concat
+app_global_get
+int 0
+==
+assert
+byte "TokenIndex:"
+txna ApplicationArgs 1
+btoi
+itob
+concat
+app_global_get
+int 0
+==
+assert
+byte "EnumIndex:"
+txna ApplicationArgs 2
+btoi
+itob
+concat
+txna ApplicationArgs 1
+btoi
+app_global_put
+byte "TokenIndex:"
+txna ApplicationArgs 1
+btoi
+itob
+concat
+txna ApplicationArgs 2
+btoi
+app_global_put
+global CurrentApplicationAddress
+byte "MesonLP:"
+txna ApplicationArgs 1
+btoi
+itob
+concat
+int 0
+app_local_put
+int 1
+return
+main_l16:
+int 0
+return
+main_l17:
 int 1
 return

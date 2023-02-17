@@ -101,41 +101,62 @@ def executeSwap(
 
 
 
+# ------------------------------------ Main Program ------------------------------------
+def mesonSwapMainFunc():
+    return Cond(
+        [
+            Or(
+                Txn.application_id() == Int(0),
+                Txn.on_completion() == OnComplete.OptIn
+            ), 
+            Approve()
+        ], [
+            Or(
+                Txn.on_completion() == OnComplete.CloseOut,
+                Txn.on_completion() == OnComplete.UpdateApplication,
+                Txn.on_completion() == OnComplete.DeleteApplication,        # todo
+            ),
+            Reject(),
+        ], [
+            Txn.on_completion() == OnComplete.NoOp,
+            Cond([
+                Txn.application_args[0] == Bytes("addSupportToken"),
+                addSupportToken(
+                    Btoi(Txn.application_args[1]),
+                    Btoi(Txn.application_args[2]),
+                )
+            ], [
+                Txn.application_args[0] == Bytes("postSwap"),
+                postSwap(
+                    Txn.application_args[1], 
+                    Btoi(Txn.application_args[2]),
+                    Btoi(Txn.application_args[3]),
+                    Txn.application_args[4],
+                )
+            ], [
+                Txn.application_args[0] == Bytes("bondSwap"),
+                bondSwap(Txn.application_args[1]),
+            ], [
+                Txn.application_args[0] == Bytes("executeSwap"),
+                executeSwap(
+                    Txn.application_args[1], 
+                    Btoi(Txn.application_args[2]),
+                    Btoi(Txn.application_args[3]),
+                    Txn.application_args[4],
+                    Btoi(Txn.application_args[5]),
+                )
+            ])
+        ]
+    )
+
+
 
 # -------------------------------------- For Test --------------------------------------
 if __name__ == '__main__':
-    
-    def mesonswap_program_func():
-        return Cond(
-            [Txn.application_id() == Int(0), Approve()],
-            [
-                Txn.on_completion() == OnComplete.NoOp,
-                Cond([
-                    Txn.application_args[0] == Bytes("postSwap"),
-                    postSwap(
-                        Txn.application_args[1], 
-                        Btoi(Txn.application_args[2]),
-                        Btoi(Txn.application_args[3]),
-                        Txn.application_args[4],
-                    )
-                ], [
-                    Txn.application_args[0] == Bytes("bondSwap"),
-                    bondSwap(Txn.application_args[1]),
-                ], [
-                    Txn.application_args[0] == Bytes("executeSwap"),
-                    executeSwap(
-                        Txn.application_args[1], 
-                        Btoi(Txn.application_args[2]),
-                        Btoi(Txn.application_args[3]),
-                        Txn.application_args[4],
-                        Btoi(Txn.application_args[5]),
-                    )
-                ])
-            ]
-        )
-    
     from test_run import TealApp
     ta = TealApp()
-    # compileTeal(mesonswap_program_func(), Mode.Application, version=8)
-    ta.create_app(mesonswap_program_func, 'mesonswap.teal', [5, 5, 0, 0])
+    open('./compiled_teal/%s' % 'mesonswap.teal', 'w').write(
+        compileTeal(mesonSwapMainFunc(), Mode.Application, version=8)
+    )
+    # ta.create_app(mesonSwapMainFunc, 'mesonswap.teal', [5, 5, 0, 0])
     # ta.call_app(['addSupportToken', 0x183301, 3])

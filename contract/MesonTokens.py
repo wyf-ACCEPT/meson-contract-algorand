@@ -4,6 +4,7 @@ from pyteal import *
 # Directly using global index to map:
 def addSupportToken(tokenIndex: Int, enumIndex: Int) -> Int:
     # todo: onlyDeployer
+    # todo: Optin
     
     #   Bytes('TokenIndex:17207135') -> Int(1)
     #   Bytes('EnumIndex:1') -> Int(17207135)
