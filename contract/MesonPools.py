@@ -6,7 +6,8 @@ from MesonTokens import *
 
 
 def initMesonPools() -> Int:
-    Approve()
+    return Approve()
+
 
 def depositAndRegister(
     amount: Int,
