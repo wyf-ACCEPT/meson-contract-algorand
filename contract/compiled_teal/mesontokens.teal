@@ -15,23 +15,22 @@ byte "addSupportToken"
 bnz main_l5
 err
 main_l5:
-txna ApplicationArgs 2
+txna ApplicationArgs 1
 btoi
 int 256
 <
 assert
-txna ApplicationArgs 2
-btoi
-int 0
-!=
-assert
 txna ApplicationArgs 1
 btoi
 int 0
 !=
 assert
+txna Assets 0
+int 0
+!=
+assert
 byte "EnumIndex:"
-txna ApplicationArgs 2
+txna ApplicationArgs 1
 btoi
 itob
 concat
@@ -40,8 +39,7 @@ int 0
 ==
 assert
 byte "TokenIndex:"
-txna ApplicationArgs 1
-btoi
+txna Assets 0
 itob
 concat
 app_global_get
@@ -49,21 +47,35 @@ int 0
 ==
 assert
 byte "EnumIndex:"
-txna ApplicationArgs 2
+txna ApplicationArgs 1
 btoi
 itob
 concat
-txna ApplicationArgs 1
-btoi
+txna Assets 0
 app_global_put
 byte "TokenIndex:"
-txna ApplicationArgs 1
-btoi
+txna Assets 0
 itob
 concat
-txna ApplicationArgs 2
+txna ApplicationArgs 1
 btoi
 app_global_put
+byte "ProtocolFee:"
+txna Assets 0
+itob
+concat
+int 0
+app_global_put
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Assets 0
+itxn_field XferAsset
+global CurrentApplicationAddress
+itxn_field AssetReceiver
+int 0
+itxn_field AssetAmount
+itxn_submit
 int 1
 return
 main_l6:

@@ -5,11 +5,8 @@ from MesonHelpers import *
 from MesonTokens import *
 
 
-def initPools() -> Int:
-    return Seq(
-        Approve()
-    )
-
+def initMesonPools() -> Int:
+    Approve()
 
 def depositAndRegister(
     amount: Int,
@@ -144,10 +141,9 @@ def release(
             Not(feeWaived),
             Seq(
                 releaseAmount.store(releaseAmount.load() - serviceFee),
-                App.localPut(
-                    currentAddr, 
-                    wrapTokenKeyName('MesonLP:', tokenIndexOut), 
-                    poolTokenBalance(currentAddr, enumIndexOut) + serviceFee
+                App.globalPut(
+                    wrapTokenKeyName('ProtocolFee:', tokenIndexOut), 
+                    App.globalGet(wrapTokenKeyName('ProtocolFee:', tokenIndexOut)) + serviceFee
                 ),
             )
         ),          # todo: transferToContract
@@ -161,11 +157,11 @@ def release(
 def mesonPoolsMainFunc():
     return Cond(
         [
-            Or(
-                Txn.application_id() == Int(0),
-                Txn.on_completion() == OnComplete.OptIn
-            ), 
-            Approve()
+            Txn.application_id() == Int(0),
+            initMesonPools(),
+        ], [
+            Txn.on_completion() == OnComplete.OptIn,
+            Approve(),
         ], [
             Or(
                 Txn.on_completion() == OnComplete.CloseOut,
@@ -178,8 +174,8 @@ def mesonPoolsMainFunc():
             Cond([
                 Txn.application_args[0] == Bytes("addSupportToken"),
                 addSupportToken(
+                    Txn.assets[0],
                     Btoi(Txn.application_args[1]),
-                    Btoi(Txn.application_args[2]),
                 )
             ], [
                 Txn.application_args[0] == Bytes("lock"),

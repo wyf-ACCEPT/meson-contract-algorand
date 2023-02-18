@@ -5,6 +5,10 @@ from MesonHelpers import *
 from MesonTokens import *
 
 
+def initMesonSwap() -> Int:
+    return Approve()
+
+
 # Step 1.1: Different to the one in solidity, this `postSwap` can only called by user!
 def postSwap(
     encodedSwap: Bytes,
@@ -105,10 +109,10 @@ def executeSwap(
 def mesonSwapMainFunc():
     return Cond(
         [
-            Or(
-                Txn.application_id() == Int(0),
-                Txn.on_completion() == OnComplete.OptIn
-            ), 
+            Txn.application_id() == Int(0),
+            initMesonSwap(),
+        ], [
+            Txn.on_completion() == OnComplete.OptIn,
             Approve()
         ], [
             Or(
@@ -122,8 +126,8 @@ def mesonSwapMainFunc():
             Cond([
                 Txn.application_args[0] == Bytes("addSupportToken"),
                 addSupportToken(
+                    Txn.assets[0],
                     Btoi(Txn.application_args[1]),
-                    Btoi(Txn.application_args[2]),
                 )
             ], [
                 Txn.application_args[0] == Bytes("postSwap"),
@@ -159,4 +163,4 @@ if __name__ == '__main__':
         compileTeal(mesonSwapMainFunc(), Mode.Application, version=8)
     )
     # ta.create_app(mesonSwapMainFunc, 'mesonswap.teal', [5, 5, 0, 0])
-    # ta.call_app(['addSupportToken', 0x183301, 3])
+    # ta.call_app(['optIn'])

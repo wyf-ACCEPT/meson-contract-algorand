@@ -1,6 +1,34 @@
 from pyteal import *
 
 
+def optInToken(tokenIndex: Int):
+    return Seq(
+        InnerTxnBuilder.Begin(),
+        InnerTxnBuilder.SetFields({
+            # TxnField.sender: Global.current_application_address(),
+            # TxnField.asset_sender: Global.current_application_address(),
+            TxnField.type_enum: TxnType.AssetTransfer,
+            TxnField.xfer_asset: tokenIndex,
+            TxnField.asset_receiver: Global.current_application_address(),
+            TxnField.asset_amount: Int(0),
+        }),
+        InnerTxnBuilder.Submit(),
+    )
+
+
+def optInApp(appIndex: Int):
+    return Seq(
+        InnerTxnBuilder.Begin(),
+        InnerTxnBuilder.SetFields({
+            TxnField.sender: Global.current_application_address(),
+            TxnField.type_enum: TxnType.ApplicationCall,
+            TxnField.application_id: appIndex,
+            TxnField.on_completion: OnComplete.OptIn,
+        }),
+        InnerTxnBuilder.Submit(),
+    )
+
+
 # Directly using global index to map:
 def addSupportToken(tokenIndex: Int, enumIndex: Int) -> Int:
     # todo: onlyDeployer
@@ -16,11 +44,13 @@ def addSupportToken(tokenIndex: Int, enumIndex: Int) -> Int:
         Assert(App.globalGet(wrapTokenKeyName('TokenIndex:', tokenIndex)) == Int(0)),
         App.globalPut(wrapTokenKeyName('EnumIndex:', enumIndex), tokenIndex),
         App.globalPut(wrapTokenKeyName('TokenIndex:', tokenIndex), enumIndex),
-        App.localPut(
-            Global.current_application_address(), 
-            wrapTokenKeyName('MesonLP:', tokenIndex), 
-            Int(0)
-        ),
+        # App.localPut(
+        #     Global.current_application_address(), 
+        #     wrapTokenKeyName('MesonLP:', tokenIndex), 
+        #     Int(0)
+        # ), # use globalPut because an app cannot has local variables of itself (?)
+        App.globalPut(wrapTokenKeyName('ProtocolFee:', tokenIndex), Int(0)),
+        optInToken(tokenIndex),
         Approve()
     )
     
@@ -47,27 +77,25 @@ def poolTokenBalance(
 
 
 # getSupportedTokens: View explorer directly to get supported token list!
-
+def mesontoken_program_func():
+    return Cond(
+        [Txn.application_id() == Int(0), Approve()],
+        [
+            Txn.on_completion() == OnComplete.NoOp,
+            Cond([
+                Txn.application_args[0] == Bytes("addSupportToken"),
+                addSupportToken(
+                    Txn.assets[0], Btoi(Txn.application_args[1])
+                )
+            ])
+        ]
+    )
 
 
 # -------------------------------------- For Test --------------------------------------
 if __name__ == '__main__':
     
-    def mesontoken_program_func():
-        return Cond(
-            [Txn.application_id() == Int(0), Approve()],
-            [
-                Txn.on_completion() == OnComplete.NoOp,
-                Cond([
-                    Txn.application_args[0] == Bytes("addSupportToken"),
-                    addSupportToken(
-                        Btoi(Txn.application_args[1]), Btoi(Txn.application_args[2])
-                    )
-                ])
-            ]
-        )
-    
     from test_run import TealApp
     ta = TealApp()
     ta.create_app(mesontoken_program_func, 'mesontokens.teal', [5, 5, 0, 0])
-    ta.call_app(['addSupportToken', 0x183301, 3])
+    # ta.call_app(['addSupportToken', 3], foreign_assets=[159625952])
