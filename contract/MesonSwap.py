@@ -134,7 +134,6 @@ def mesonSwapMainFunc():
                     Txn.application_args[1], 
                     Btoi(Txn.application_args[2]),
                     Btoi(Txn.application_args[3]),
-                    Txn.application_args[4],
                 )
             ], [
                 Txn.application_args[0] == Bytes("bondSwap"),

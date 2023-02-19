@@ -117,7 +117,6 @@ def release(
     feeWaived = extraItemFrom('_feeWaived', encodedSwap)
     expireTs = itemFrom('expireTs', encodedSwap)
     swapId = getSwapId(encodedSwap, initiator)
-    currentAddr = Global.current_application_address()
     enumIndexOut = itemFrom('outToken', encodedSwap)
     tokenIndexOut = getTokenIndex(enumIndexOut)
     serviceFee = extraItemFrom('_serviceFee', encodedSwap)
@@ -199,19 +198,19 @@ def mesonPoolsMainFunc():
                 Txn.application_args[0] == Bytes("depositAndRegister"),
                 depositAndRegister(
                     Btoi(Txn.application_args[1]),
-                    Txn.asset[0],
+                    Txn.assets[0],
                 )
             ], [
                 Txn.application_args[0] == Bytes("deposit"),
                 deposit(
                     Btoi(Txn.application_args[1]),
-                    Txn.asset[0],
+                    Txn.assets[0],
                 )
             ], [
                 Txn.application_args[0] == Bytes("withdraw"),
                 withdraw(
                     Btoi(Txn.application_args[1]),
-                    Txn.asset[0],
+                    Txn.assets[0],
                 )
             ])
         ]

@@ -170,7 +170,7 @@ def postedSwapFrom(
 ) -> Bytes:
     return Concat(
         initiator, lp,
-        Substring(Itob(enumIndex, Int(7), Int(8)))
+        Substring(Itob(enumIndex), Int(7), Int(8))
     )
 
 

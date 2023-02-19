@@ -2,11 +2,11 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l30
+bnz main_l28
 txn OnCompletion
 int OptIn
 ==
-bnz main_l29
+bnz main_l27
 txn OnCompletion
 int CloseOut
 ==
@@ -18,7 +18,7 @@ txn OnCompletion
 int DeleteApplication
 ==
 ||
-bnz main_l28
+bnz main_l26
 txn OnCompletion
 int NoOp
 ==
@@ -28,38 +28,21 @@ main_l5:
 txna ApplicationArgs 0
 byte "addSupportToken"
 ==
-bnz main_l27
+bnz main_l25
 txna ApplicationArgs 0
 byte "postSwap"
 ==
-bnz main_l23
+bnz main_l21
 txna ApplicationArgs 0
 byte "bondSwap"
 ==
-bnz main_l22
+bnz main_l20
 txna ApplicationArgs 0
 byte "executeSwap"
 ==
-bnz main_l12
-txna ApplicationArgs 0
-byte "optIn"
-==
-bnz main_l11
+bnz main_l10
 err
-main_l11:
-itxn_begin
-global CurrentApplicationAddress
-itxn_field Sender
-int appl
-itxn_field TypeEnum
-global CurrentApplicationID
-itxn_field ApplicationID
-int OptIn
-itxn_field OnCompletion
-itxn_submit
-int 1
-return
-main_l12:
+main_l10:
 txna ApplicationArgs 1
 box_get
 store 5
@@ -81,14 +64,14 @@ txn FirstValidTime
 int 3600
 +
 <
-bnz main_l21
+bnz main_l19
 txna ApplicationArgs 1
 byte 0x1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 box_put
-main_l14:
-txna ApplicationArgs 5
+main_l12:
+txna ApplicationArgs 4
 btoi
-bnz main_l20
+bnz main_l18
 txna ApplicationArgs 1
 extract 31 1
 btoi
@@ -102,12 +85,12 @@ int 255
 &&
 int 1
 ==
-bnz main_l19
+bnz main_l17
 txna ApplicationArgs 1
 extract 1 5
 btoi
 store 6
-main_l17:
+main_l15:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -125,18 +108,18 @@ itxn_field AssetReceiver
 load 6
 itxn_field AssetAmount
 itxn_submit
-main_l18:
+main_l16:
 int 1
 return
-main_l19:
+main_l17:
 txna ApplicationArgs 1
 extract 1 5
 btoi
 int 1000000000000
 *
 store 6
-b main_l17
-main_l20:
+b main_l15
+main_l18:
 load 3
 extract 32 32
 byte "MesonLP:"
@@ -167,13 +150,13 @@ extract 1 5
 btoi
 +
 app_local_put
-b main_l18
-main_l21:
+b main_l16
+main_l19:
 txna ApplicationArgs 1
 box_del
 assert
-b main_l14
-main_l22:
+b main_l12
+main_l20:
 txna ApplicationArgs 1
 box_get
 store 2
@@ -191,7 +174,7 @@ txn Sender
 box_replace
 int 1
 return
-main_l23:
+main_l21:
 txna ApplicationArgs 1
 extract 29 2
 btoi
@@ -225,11 +208,6 @@ txn FirstValidTime
 int 7200
 <
 &&
-txna ApplicationArgs 4
-extract 32 32
-byte 0x0000000000000000000000000000000000000000000000000000000000000000
-==
-&&
 int 1
 &&
 txna ApplicationArgs 1
@@ -251,12 +229,12 @@ int 255
 &&
 int 1
 ==
-bnz main_l26
+bnz main_l24
 txna ApplicationArgs 1
 extract 1 5
 btoi
 store 0
-main_l25:
+main_l23:
 int 1
 gtxns TypeEnum
 int axfer
@@ -296,36 +274,43 @@ int 65
 box_create
 assert
 txna ApplicationArgs 1
-txna ApplicationArgs 4
+txn Sender
+byte 0x0000000000000000000000000000000000000000000000000000000000000000
+concat
+txna ApplicationArgs 1
+extract 31 1
+btoi
+itob
+extract 7 1
+concat
 box_put
 int 1
 return
-main_l26:
+main_l24:
 txna ApplicationArgs 1
 extract 1 5
 btoi
 int 1000000000000
 *
 store 0
-b main_l25
-main_l27:
-txna ApplicationArgs 2
+b main_l23
+main_l25:
+txna ApplicationArgs 1
 btoi
 int 256
 <
 assert
-txna ApplicationArgs 2
-btoi
-int 0
-!=
-assert
 txna ApplicationArgs 1
 btoi
 int 0
 !=
 assert
+txna Assets 0
+int 0
+!=
+assert
 byte "EnumIndex:"
-txna ApplicationArgs 2
+txna ApplicationArgs 1
 btoi
 itob
 concat
@@ -334,8 +319,7 @@ int 0
 ==
 assert
 byte "TokenIndex:"
-txna ApplicationArgs 1
-btoi
+txna Assets 0
 itob
 concat
 app_global_get
@@ -343,24 +327,21 @@ int 0
 ==
 assert
 byte "EnumIndex:"
-txna ApplicationArgs 2
+txna ApplicationArgs 1
 btoi
 itob
 concat
-txna ApplicationArgs 1
-btoi
+txna Assets 0
 app_global_put
 byte "TokenIndex:"
-txna ApplicationArgs 1
-btoi
+txna Assets 0
 itob
 concat
-txna ApplicationArgs 2
+txna ApplicationArgs 1
 btoi
 app_global_put
 byte "ProtocolFee:"
-txna ApplicationArgs 1
-btoi
+txna Assets 0
 itob
 concat
 int 0
@@ -368,8 +349,7 @@ app_global_put
 itxn_begin
 int axfer
 itxn_field TypeEnum
-txna ApplicationArgs 1
-btoi
+txna Assets 0
 itxn_field XferAsset
 global CurrentApplicationAddress
 itxn_field AssetReceiver
@@ -378,12 +358,12 @@ itxn_field AssetAmount
 itxn_submit
 int 1
 return
-main_l28:
+main_l26:
 int 0
 return
-main_l29:
+main_l27:
 int 1
 return
-main_l30:
+main_l28:
 int 1
 return
