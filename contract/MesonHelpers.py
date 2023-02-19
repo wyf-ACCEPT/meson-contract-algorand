@@ -32,6 +32,7 @@ def safeTransfer(
 # transferToContract: todo
 # unsafeDepositToken: discard
 
+
 def validateTokenReceived(
     txid: Int,
     tokenIndex: Int,
@@ -56,7 +57,6 @@ def validateTokenReceived(
     )
 
 
-
 # ---------------------------------- encodedSwap processing ----------------------------------
 
 # In pyteal, the type of `encodedSwap` should be `Bytes`, because type `Int` cannot be the key of Box variable.
@@ -71,7 +71,6 @@ def validateTokenReceived(
 # split variables: 0x|version|amount|salt|fee|expireTs|outChain|outToken|inChain|inToken
 # index(start-end): 0x | 0:1 | 1:6 | 6:16 | 16:21 | 21:26 | 26:28 | 28:29 | 29:31 | 31:32
 # index(start-length): 0x | 0,1 | 1,5 | 6,10 | 16,5 | 21,5 | 26,2 | 28,1 | 29,2 | 31,1
-
 def itemFrom(
     item: str,
     encodedSwap: Bytes,
@@ -112,7 +111,9 @@ def extraItemFrom(
     saltUsing = itemFrom("saltUsing", encodedSwap)
     match extraItem:
         case "_serviceFee":
-            content = itemFrom("amount", encodedSwap) * cp.SERVICE_FEE_RATE / Int(10_000)
+            content = (
+                itemFrom("amount", encodedSwap) * cp.SERVICE_FEE_RATE / Int(10_000)
+            )
         case "_willTransferToContract":
             content = saltUsing & Int(0x80) == Int(0)
         case "_feeWaived":
@@ -123,15 +124,13 @@ def extraItemFrom(
     return content
 
 
-
 # ---------------------------- poolToken, lockedSwap, postedSwap ----------------------------
 
 # `postedSwap` in format of `initiator:address(32)|lp:address(32)|enumIndex:uint8(1)`
 # Not the same one as in solidity!
-  
 def itemFromPosted(
     item: str,
-    postedSwap: Bytes,      # Bytes(65)
+    postedSwap: Bytes,  # Bytes(65)
 ) -> Int:
     match item:
         case "initiator":
@@ -144,12 +143,14 @@ def itemFromPosted(
             assert False
     return content
 
+
 # `lockedSwap` in format of `until:uint40(8)|lp:address(32)|enumIndex:uint8(1)`
 # Not the same one as in solidity!
 
+
 def itemFromLocked(
     item: str,
-    lockedSwap: Bytes,      # Bytes(41)
+    lockedSwap: Bytes,  # Bytes(41)
 ) -> Int:
     match item:
         case "until":
@@ -161,17 +162,14 @@ def itemFromLocked(
         case _:
             assert False
     return content
-        
+
 
 def postedSwapFrom(
     initiator: Bytes,
     lp: Bytes,
     enumIndex: Int,
 ) -> Bytes:
-    return Concat(
-        initiator, lp,
-        Substring(Itob(enumIndex), Int(7), Int(8))
-    )
+    return Concat(initiator, lp, Substring(Itob(enumIndex), Int(7), Int(8)))
 
 
 def lockedSwapFrom(
@@ -180,12 +178,10 @@ def lockedSwapFrom(
     enumIndex: Int,
 ) -> Bytes:
     return Concat(
-        Substring(Itob(until), Int(3), Int(8)), 
-        lp, 
-        Substring(Itob(enumIndex), Int(7), Int(8))
+        Substring(Itob(until), Int(3), Int(8)),
+        lp,
+        Substring(Itob(enumIndex), Int(7), Int(8)),
     )
-
-
 
 
 # ---------------------------------- other utils functions ----------------------------------
@@ -221,13 +217,11 @@ def needAdjustAmount(enumIndex: Int) -> Int:
 def getSwapId(
     encodedSwap: Bytes,
     initiator: Bytes,
-) -> Bytes:         # Bytes(32)
+) -> Bytes:  # Bytes(32)
     return Keccak256(Concat(encodedSwap, initiator))
 
 
-
 # ---------------------------------- signature ----------------------------------
-
 def checkRequestSignature(
     encodedSwap: Bytes,
     r_s: Int,

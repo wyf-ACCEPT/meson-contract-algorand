@@ -15,16 +15,16 @@ def postSwap(
     r_s: Int,
     v: Int,
 ) -> Int:
-    inChain = itemFrom('inChain', encodedSwap)
-    version = itemFrom('version', encodedSwap)
-    amount = itemFrom('amount', encodedSwap)
-    delta = itemFrom('expireTs', encodedSwap) - Txn.first_valid_time()
-    initiator = Txn.sender()        # todo
+    inChain = itemFrom("inChain", encodedSwap)
+    version = itemFrom("version", encodedSwap)
+    amount = itemFrom("amount", encodedSwap)
+    delta = itemFrom("expireTs", encodedSwap) - Txn.first_valid_time()
+    initiator = Txn.sender()  # todo
     lp_not_bonded = cp.ZERO_ADDRESS
-    enumIndexIn = itemFrom('inToken', encodedSwap)
+    enumIndexIn = itemFrom("inToken", encodedSwap)
     tokenIndexIn = getTokenIndex(enumIndexIn)
     postingValue = postedSwapFrom(initiator, lp_not_bonded, enumIndexIn)
-    
+
     conditions = And(
         inChain == cp.SHORT_COIN_TYPE,
         version == cp.MESON_PROTOCOL_VERSION,
@@ -36,12 +36,12 @@ def postSwap(
             Int(1), tokenIndexIn, amount, enumIndexIn
         ),  # the user must call `AssetTransfer` at Gtxn[1], and call `postSwap` at Gtxn[0]
     )
-    
+
     return Seq(
         Assert(conditions),
         Assert(App.box_create(encodedSwap, Int(65))),
         App.box_put(encodedSwap, postingValue),
-        Approve()
+        Approve(),
     )
 
 
@@ -50,11 +50,10 @@ def bondSwap(encodedSwap: Bytes):
     return Seq(
         postedSwap_get := App.box_get(encodedSwap),
         Assert(postedSwap_get.hasValue()),
-        Assert(itemFromPosted('lp', postedSwap_get.value()) == cp.ZERO_ADDRESS),
+        Assert(itemFromPosted("lp", postedSwap_get.value()) == cp.ZERO_ADDRESS),
         App.box_replace(encodedSwap, Int(32), Txn.sender()),
-        Approve()
+        Approve(),
     )
-
 
 
 # Step 4.
@@ -63,45 +62,45 @@ def executeSwap(
     r_s: Int,
     v: Int,
     depositToPool: Int,
-    recipient: Bytes,   # This variable is bring from Txn.accounts
+    recipient: Bytes,  # This variable is bring from Txn.accounts
 ) -> Int:
-    expireTs = itemFrom('expireTs', encodedSwap)
-    amount = itemFrom('amount', encodedSwap)
-    enumIndexIn = itemFrom('inToken', encodedSwap)
+    expireTs = itemFrom("expireTs", encodedSwap)
+    amount = itemFrom("amount", encodedSwap)
+    enumIndexIn = itemFrom("inToken", encodedSwap)
     tokenIndexIn = getTokenIndex(enumIndexIn)
     postedSwap = ScratchVar(TealType.bytes)
-    initiator = itemFromPosted('initiator', postedSwap.load())
-    lp = itemFromPosted('lp', postedSwap.load())
-    
+    initiator = itemFromPosted("initiator", postedSwap.load())
+    lp = itemFromPosted("lp", postedSwap.load())
+
     postedSwap_value = Seq(
         postedSwap_get := App.box_get(encodedSwap),
         Assert(postedSwap_get.hasValue()),
-        postedSwap_get.value()
-    ) 
+        postedSwap_get.value(),
+    )
     conditions = And(
         postedSwap.load() != cp.POSTED_SWAP_EXPIRE,
-        checkReleaseSignature(encodedSwap, recipient, r_s, v, initiator)
+        checkReleaseSignature(encodedSwap, recipient, r_s, v, initiator),
     )
-    
+
     return Seq(
         postedSwap.store(postedSwap_value),
         Assert(conditions),
         If(
             expireTs < Txn.first_valid_time() + cp.MIN_BOND_TIME_PERIOD,
             Assert(App.box_delete(encodedSwap)),
-            App.box_put(encodedSwap, cp.POSTED_SWAP_EXPIRE)
+            App.box_put(encodedSwap, cp.POSTED_SWAP_EXPIRE),
         ),
         If(
             depositToPool,
             App.localPut(
-                lp, wrapTokenKeyName('MesonLP:', tokenIndexIn), 
-                poolTokenBalance(lp, enumIndexIn) + amount
+                lp,
+                wrapTokenKeyName("MesonLP:", tokenIndexIn),
+                poolTokenBalance(lp, enumIndexIn) + amount,
             ),
-            safeTransfer(tokenIndexIn, lp, amount, enumIndexIn)
+            safeTransfer(tokenIndexIn, lp, amount, enumIndexIn),
         ),
-        Approve()
+        Approve(),
     )
-
 
 
 # ------------------------------------ Main Program ------------------------------------
@@ -110,54 +109,61 @@ def mesonSwapMainFunc():
         [
             Txn.application_id() == Int(0),
             initMesonSwap(),
-        ], [
-            Txn.on_completion() == OnComplete.OptIn,
-            Approve()
-        ], [
+        ],
+        [
+            Txn.on_completion() == OnComplete.OptIn, Approve()
+        ],
+        [
             Or(
                 Txn.on_completion() == OnComplete.CloseOut,
                 Txn.on_completion() == OnComplete.UpdateApplication,
-                Txn.on_completion() == OnComplete.DeleteApplication,        # todo
+                Txn.on_completion() == OnComplete.DeleteApplication,  # todo
             ),
             Reject(),
-        ], [
+        ],
+        [
             Txn.on_completion() == OnComplete.NoOp,
-            Cond([
-                Txn.application_args[0] == Bytes("addSupportToken"),
-                addSupportToken(
-                    Txn.assets[0],
-                    Btoi(Txn.application_args[1]),
-                )
-            ], [
-                Txn.application_args[0] == Bytes("postSwap"),
-                postSwap(
-                    Txn.application_args[1], 
-                    Btoi(Txn.application_args[2]),
-                    Btoi(Txn.application_args[3]),
-                )
-            ], [
-                Txn.application_args[0] == Bytes("bondSwap"),
-                bondSwap(Txn.application_args[1]),
-            ], [
-                Txn.application_args[0] == Bytes("executeSwap"),
-                executeSwap(
-                    Txn.application_args[1], 
-                    Btoi(Txn.application_args[2]),
-                    Btoi(Txn.application_args[3]),
-                    Btoi(Txn.application_args[4]),
-                    Txn.accounts[1],
-                )
-            ])
-        ]
+            Cond(
+                [
+                    Txn.application_args[0] == Bytes("addSupportToken"),
+                    addSupportToken(
+                        Txn.assets[0],
+                        Btoi(Txn.application_args[1]),
+                    ),
+                ],
+                [
+                    Txn.application_args[0] == Bytes("postSwap"),
+                    postSwap(
+                        Txn.application_args[1],
+                        Btoi(Txn.application_args[2]),
+                        Btoi(Txn.application_args[3]),
+                    ),
+                ],
+                [
+                    Txn.application_args[0] == Bytes("bondSwap"),
+                    bondSwap(Txn.application_args[1]),
+                ],
+                [
+                    Txn.application_args[0] == Bytes("executeSwap"),
+                    executeSwap(
+                        Txn.application_args[1],
+                        Btoi(Txn.application_args[2]),
+                        Btoi(Txn.application_args[3]),
+                        Btoi(Txn.application_args[4]),
+                        Txn.accounts[1],
+                    ),
+                ],
+            ),
+        ],
     )
 
 
-
 # -------------------------------------- For Test --------------------------------------
-if __name__ == '__main__':
+if __name__ == "__main__":
     from test_run import TealApp
+
     ta = TealApp()
-    open('./compiled_teal/%s' % 'mesonswap.teal', 'w').write(
+    open("./compiled_teal/%s" % "mesonswap.teal", "w").write(
         compileTeal(mesonSwapMainFunc(), Mode.Application, version=8)
     )
     # ta.create_app(mesonSwapMainFunc, 'mesonswap.teal', [5, 5, 0, 0])
