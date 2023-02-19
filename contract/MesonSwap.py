@@ -14,16 +14,16 @@ def postSwap(
     encodedSwap: Bytes,
     r_s: Int,
     v: Int,
-    postingValue: Bytes,
 ) -> Int:
     inChain = itemFrom('inChain', encodedSwap)
     version = itemFrom('version', encodedSwap)
     amount = itemFrom('amount', encodedSwap)
     delta = itemFrom('expireTs', encodedSwap) - Txn.first_valid_time()
-    initiator = itemFromPosted('initiator', postingValue)
-    lp_not_bonded = itemFromPosted('lp', postingValue)
+    initiator = Txn.sender()        # todo
+    lp_not_bonded = cp.ZERO_ADDRESS
     enumIndexIn = itemFrom('inToken', encodedSwap)
     tokenIndexIn = getTokenIndex(enumIndexIn)
+    postingValue = postedSwapFrom(initiator, lp_not_bonded, enumIndexIn)
     
     conditions = And(
         inChain == cp.SHORT_COIN_TYPE,
@@ -31,7 +31,6 @@ def postSwap(
         amount < cp.MAX_SWAP_AMOUNT,
         delta > cp.MIN_BOND_TIME_PERIOD,
         delta < cp.MAX_BOND_TIME_PERIOD,
-        lp_not_bonded == cp.ZERO_ADDRESS,
         checkRequestSignature(encodedSwap, r_s, v, initiator),
         validateTokenReceived(
             Int(1), tokenIndexIn, amount, enumIndexIn
@@ -63,8 +62,8 @@ def executeSwap(
     encodedSwap: Bytes,
     r_s: Int,
     v: Int,
-    recipient: Bytes,
     depositToPool: Int,
+    recipient: Bytes,   # This variable is bring from Txn.accounts
 ) -> Int:
     expireTs = itemFrom('expireTs', encodedSwap)
     amount = itemFrom('amount', encodedSwap)
@@ -146,8 +145,8 @@ def mesonSwapMainFunc():
                     Txn.application_args[1], 
                     Btoi(Txn.application_args[2]),
                     Btoi(Txn.application_args[3]),
-                    Txn.application_args[4],
-                    Btoi(Txn.application_args[5]),
+                    Btoi(Txn.application_args[4]),
+                    Txn.accounts[1],
                 )
             ])
         ]

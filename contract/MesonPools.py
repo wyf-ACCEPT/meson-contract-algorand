@@ -70,7 +70,7 @@ def lock(
     encodedSwap: Bytes,
     r_s: Int,
     v: Int,
-    initiator: Bytes,
+    initiator: Bytes,      # This variable is bring from Txn.accounts
 ) -> Int:
     outChain = itemFrom('outChain', encodedSwap)
     version = itemFrom('version', encodedSwap)
@@ -109,8 +109,8 @@ def release(
     encodedSwap: Bytes,
     r_s: Int,
     v: Int,
-    initiator: Bytes,
-    recipient: Bytes,
+    initiator: Bytes,      # This variable is bring from Txn.accounts
+    recipient: Bytes,      # This variable is bring from Txn.accounts
 ) -> Int:
             # todo: Txn.sender() == <tx.origin>?
             # todo: _onlyPremiumManager
@@ -184,7 +184,7 @@ def mesonPoolsMainFunc():
                     Txn.application_args[1], 
                     Btoi(Txn.application_args[2]),
                     Btoi(Txn.application_args[3]),
-                    Txn.application_args[4],
+                    Txn.accounts[1],
                 )
             ], [
                 Txn.application_args[0] == Bytes("release"),
@@ -192,8 +192,26 @@ def mesonPoolsMainFunc():
                     Txn.application_args[1], 
                     Btoi(Txn.application_args[2]),
                     Btoi(Txn.application_args[3]),
-                    Txn.application_args[4],
-                    Txn.application_args[5],
+                    Txn.accounts[1],
+                    Txn.accounts[2],
+                )
+            ], [
+                Txn.application_args[0] == Bytes("depositAndRegister"),
+                depositAndRegister(
+                    Btoi(Txn.application_args[1]),
+                    Txn.asset[0],
+                )
+            ], [
+                Txn.application_args[0] == Bytes("deposit"),
+                deposit(
+                    Btoi(Txn.application_args[1]),
+                    Txn.asset[0],
+                )
+            ], [
+                Txn.application_args[0] == Bytes("withdraw"),
+                withdraw(
+                    Btoi(Txn.application_args[1]),
+                    Txn.asset[0],
                 )
             ])
         ]

@@ -126,7 +126,7 @@ def extraItemFrom(
 
 # ---------------------------- poolToken, lockedSwap, postedSwap ----------------------------
 
-# `postedSwap` in format of `initiator:address(32)|lp:address(32)|tokenIndex:uint8(1)`
+# `postedSwap` in format of `initiator:address(32)|lp:address(32)|enumIndex:uint8(1)`
 # Not the same one as in solidity!
   
 def itemFromPosted(
@@ -144,7 +144,7 @@ def itemFromPosted(
             assert False
     return content
 
-# `lockedSwap` in format of `until:uint40(8)|lp:address(32)|tokenIndex:uint8(1)`
+# `lockedSwap` in format of `until:uint40(8)|lp:address(32)|enumIndex:uint8(1)`
 # Not the same one as in solidity!
 
 def itemFromLocked(
@@ -162,6 +162,17 @@ def itemFromLocked(
             assert False
     return content
         
+
+def postedSwapFrom(
+    initiator: Bytes,
+    lp: Bytes,
+    enumIndex: Int,
+) -> Bytes:
+    return Concat(
+        initiator, lp,
+        Substring(Itob(enumIndex, Int(7), Int(8)))
+    )
+
 
 def lockedSwapFrom(
     until: Int,
