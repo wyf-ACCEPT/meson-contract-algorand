@@ -522,7 +522,7 @@ txna ApplicationArgs 1
 txna Accounts 1
 concat
 keccak256
-int 41
+int 38
 box_create
 assert
 txna ApplicationArgs 1

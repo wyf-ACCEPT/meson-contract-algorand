@@ -88,8 +88,7 @@ def lock(
     conditions = And(
         outChain == cp.SHORT_COIN_TYPE,
         version == cp.MESON_PROTOCOL_VERSION,
-        until
-        < expireTs - Int(300),  # 5 minutes     # todo: check if it's 300 or 300,000
+        until < expireTs - Int(300),  # 5 minutes     # todo: check if it's 300 or 300,000
         checkRequestSignature(encodedSwap, r_s, v, initiator),
         poolTokenBalance(lp, enumIndexOut) > lockAmount,
     )
@@ -101,7 +100,7 @@ def lock(
             wrapTokenKeyName("MesonLP:", tokenIndexOut),
             poolTokenBalance(lp, enumIndexOut) - lockAmount,
         ),
-        Assert(App.box_create(swapId, Int(41))),
+        Assert(App.box_create(swapId, Int(38))),
         App.box_put(swapId, lockedSwap),
         Approve(),
     )
