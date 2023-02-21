@@ -3,7 +3,7 @@ from MesonConfig import ConfigParams as cp
 
 
 # ---------------------------------- transfer and deposit ----------------------------------
-def safeTransfer(
+def _safeTransfer(
     assetId: Int,
     recipient: Bytes,
     amount: Int,
@@ -12,7 +12,7 @@ def safeTransfer(
     amount_adjust: Int = ScratchVar(TealType.uint64)
     return Seq(
         If(
-            needAdjustAmount(tokenIndex) == Int(1),
+            _needAdjustAmount(tokenIndex) == Int(1),
             amount_adjust.store(amount * Int(1_000_000_000_000)),
             amount_adjust.store(amount),
         ),
@@ -33,7 +33,7 @@ def safeTransfer(
 # unsafeDepositToken: discard
 
 
-def validateTokenReceived(
+def _validateTokenReceived(
     txid: Int,
     assetId: Int,
     amount: Int,
@@ -43,7 +43,7 @@ def validateTokenReceived(
     return Seq(
         Assert(amount > Int(0)),
         If(
-            needAdjustAmount(tokenIndex) == Int(1),
+            _needAdjustAmount(tokenIndex) == Int(1),
             amount_adjust.store(amount * Int(1_000_000_000_000)),
             amount_adjust.store(amount),
         ),
@@ -71,7 +71,7 @@ def validateTokenReceived(
 # split variables: 0x|version|amount|salt|fee|expireTs|outChain|outToken|inChain|inToken
 # index(start-end): 0x | 0:1 | 1:6 | 6:16 | 16:21 | 21:26 | 26:28 | 28:29 | 29:31 | 31:32
 # index(start-length): 0x | 0,1 | 1,5 | 6,10 | 16,5 | 21,5 | 26,2 | 28,1 | 29,2 | 31,1
-def decodeSwap(
+def _decodeSwap(
     encodedSwap: Bytes,
     field: str,
 ) -> Int:
@@ -104,15 +104,15 @@ def decodeSwap(
     return Btoi(content)
 
 
-def extraItemFrom(
+def _extraItemFrom(
     extraItem: str,
     encodedSwap: Bytes,
 ) -> Int:
-    saltHeader = decodeSwap(encodedSwap, "saltHeader")
+    saltHeader = _decodeSwap(encodedSwap, "saltHeader")
     match extraItem:
         case "_serviceFee":
             content = (
-                decodeSwap(encodedSwap, "amount") * cp.SERVICE_FEE_RATE / Int(10_000)
+                _decodeSwap(encodedSwap, "amount") * cp.SERVICE_FEE_RATE / Int(10_000)
             )
         case "_willTransferToContract":
             content = saltHeader & Int(0x80) == Int(0)
@@ -128,7 +128,7 @@ def extraItemFrom(
 
 # `postedSwap` in format of `lp:address(32)|initiator:eth_address(20)|from_address:address(32)`
 # Not the same one as in solidity!
-def itemFromPosted(
+def _itemFromPosted(
     item: str,
     postedSwap: Bytes,  # Bytes(65)
 ) -> Int:
@@ -144,7 +144,7 @@ def itemFromPosted(
     return content
 
 
-def postedSwapFrom(
+def _postedSwapFrom(
     lp: Bytes,
     initiator: Bytes,
     from_address: Bytes,
@@ -154,7 +154,7 @@ def postedSwapFrom(
 
 # `lockedSwap` in format of `lp:address(32)|until:uint40(5)|recipient:address(32)`
 # Not the same one as in solidity!
-def itemFromLocked(
+def _itemFromLocked(
     item: str,
     lockedSwap: Bytes,  # Bytes(41)
 ) -> Int:
@@ -170,7 +170,7 @@ def itemFromLocked(
     return content
 
 
-def lockedSwapFrom(
+def _lockedSwapFrom(
     lp: Bytes,
     until: Int,
     recipient: Bytes,
@@ -187,7 +187,7 @@ def lockedSwapFrom(
 #   function _needAdjustAmount(uint8 assetId) internal pure returns (bool) {
 #     return assetId > 32 && assetId < 255;
 #   }
-def needAdjustAmount(tokenIndex: Int) -> Int:
+def _needAdjustAmount(tokenIndex: Int) -> Int:
     return And(tokenIndex > Int(32), tokenIndex < Int(255))
 
 
@@ -212,7 +212,7 @@ def needAdjustAmount(tokenIndex: Int) -> Int:
 # 0000000000000000000000000000000000000000000000000000000000000006
 
 
-def getSwapId(
+def _getSwapId(
     encodedSwap: Bytes,
     initiator: Bytes,
 ) -> Bytes:  # Bytes(32)
@@ -220,7 +220,7 @@ def getSwapId(
 
 
 # ---------------------------------- signature ----------------------------------
-def checkRequestSignature(
+def _checkRequestSignature(
     encodedSwap: Bytes,
     r_s: Int,
     v: Int,
@@ -230,7 +230,7 @@ def checkRequestSignature(
     return Int(1)
 
 
-def checkReleaseSignature(
+def _checkReleaseSignature(
     encodedSwap: Bytes,
     recipient: Bytes,
     r_s: Int,

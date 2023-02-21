@@ -44,39 +44,39 @@ def addSupportToken(assetId: Int, tokenIndex: Int) -> Int:
         Assert(tokenIndex < Int(256)),
         Assert(tokenIndex != Int(0)),
         Assert(assetId != Int(0)),
-        Assert(App.globalGet(wrapTokenKeyName("TokenIndex:", tokenIndex)) == Int(0)),
-        Assert(App.globalGet(wrapTokenKeyName("AssetId:", assetId)) == Int(0)),
-        App.globalPut(wrapTokenKeyName("TokenIndex:", tokenIndex), assetId),
-        App.globalPut(wrapTokenKeyName("AssetId:", assetId), tokenIndex),
+        Assert(_getAssetId(tokenIndex) == Int(0)),
+        Assert(_getTokenIndex(assetId) == Int(0)),
+        App.globalPut(_wrapTokenKeyName("TokenIndex:", tokenIndex), assetId),
+        App.globalPut(_wrapTokenKeyName("AssetId:", assetId), tokenIndex),
         # App.localPut(
         #     Global.current_application_address(),
-        #     wrapTokenKeyName('MesonLP:', assetId),
+        #     _wrapTokenKeyName('MesonLP:', assetId),
         #     Int(0)
         # ), # use globalPut because an app cannot has local variables of itself (?)
-        App.globalPut(wrapTokenKeyName("ProtocolFee:", assetId), Int(0)),
+        App.globalPut(_wrapTokenKeyName("ProtocolFee:", assetId), Int(0)),
         optInToken(assetId),
         Approve(),
     )
 
 
-def wrapTokenKeyName(suffix: str, index: Int) -> Bytes:
+def _wrapTokenKeyName(suffix: str, index: Int) -> Bytes:
     return Concat(Bytes(suffix), Itob(index))
 
 
-def getTokenIndex(assetId: Int) -> Int:
-    return App.globalGet(wrapTokenKeyName("AssetId:", assetId))
+def _getTokenIndex(assetId: Int) -> Int:
+    return App.globalGet(_wrapTokenKeyName("AssetId:", assetId))
 
 
-def getAssetId(tokenIndex: Int) -> Int:
-    return App.globalGet(wrapTokenKeyName("TokenIndex:", tokenIndex))
+def _getAssetId(tokenIndex: Int) -> Int:
+    return App.globalGet(_wrapTokenKeyName("TokenIndex:", tokenIndex))
 
 
 def poolTokenBalance(
     lp: Bytes,
     tokenIndex: Int,
 ) -> Int:
-    assetId = getAssetId(tokenIndex)
-    return App.localGet(lp, wrapTokenKeyName("MesonLP:", assetId))
+    assetId = _getAssetId(tokenIndex)
+    return App.localGet(lp, _wrapTokenKeyName("MesonLP:", assetId))
 
 
 # getSupportedTokens: View explorer directly to get supported token list!

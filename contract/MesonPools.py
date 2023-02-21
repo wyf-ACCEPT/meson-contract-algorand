@@ -9,21 +9,28 @@ def initMesonPools() -> Int:
     return Approve()
 
 
+def _updateBalanceOfPool(
+    Bytes: lp,
+    assetId: Int,
+    balance: Int,
+) -> Int:
+    return App.localPut(lp, _wrapTokenKeyName("MesonLP:", assetId), balance)
+
 def depositAndRegister(
     amount: Int,
     assetId: Int,
 ) -> Int:
     lp = Txn.sender()
-    tokenIndex = getTokenIndex(assetId)
+    tokenIndex = _getTokenIndex(assetId)
 
     conditions = And(
-        validateTokenReceived(Int(1), assetId, amount, tokenIndex),
+        _validateTokenReceived(Int(1), assetId, amount, tokenIndex),
         poolTokenBalance(lp, tokenIndex) == Int(0),
     )
 
     return Seq(
         Assert(conditions),
-        App.localPut(lp, wrapTokenKeyName("MesonLP:", assetId), amount),
+        _updateBalanceOfPool(lp, assetId, amount),
         Approve(),
     )
 
@@ -34,15 +41,11 @@ def deposit(
     assetId: Int,
 ) -> Int:
     lp = Txn.sender()
-    tokenIndex = getTokenIndex(assetId)
+    tokenIndex = _getTokenIndex(assetId)
 
     return Seq(
-        Assert(validateTokenReceived(Int(1), assetId, amount, tokenIndex)),
-        App.localPut(
-            lp,
-            wrapTokenKeyName("MesonLP:", assetId),
-            poolTokenBalance(lp, tokenIndex) + amount,
-        ),
+        Assert(_validateTokenReceived(Int(1), assetId, amount, tokenIndex)),
+        _updateBalanceOfPool(lp, assetId, poolTokenBalance(lp, tokenIndex) + amount),
         Approve(),
     )
 
@@ -53,16 +56,12 @@ def withdraw(
     assetId: Int,
 ) -> Int:
     lp = Txn.sender()
-    tokenIndex = getTokenIndex(assetId)
+    tokenIndex = _getTokenIndex(assetId)
 
     return Seq(
         Assert(poolTokenBalance(lp, tokenIndex) >= amount),
-        App.localPut(
-            lp,
-            wrapTokenKeyName("MesonLP:", assetId),
-            poolTokenBalance(lp, tokenIndex) - amount,
-        ),
-        safeTransfer(assetId, lp, amount, tokenIndex),
+        _updateBalanceOfPool(lp, assetId, poolTokenBalance(lp, tokenIndex) - amount),
+        _safeTransfer(assetId, lp, amount, tokenIndex),
         Approve(),
     )
 
@@ -73,33 +72,30 @@ def lock(
     r: Int,
     sv: Int,
     initiator: Bytes,  # This variable is bring from Txn.accounts
+    recipient: Bytes,
 ) -> Int:
-    outChain = decodeSwap(encodedSwap, "outChain")
-    version = decodeSwap(encodedSwap, "version")
-    lockAmount = decodeSwap(encodedSwap, "amount") - decodeSwap(encodedSwap, "feeForLP")
-    expireTs = decodeSwap(encodedSwap, "expireTs")
+    outChain = _decodeSwap(encodedSwap, "outChain")
+    version = _decodeSwap(encodedSwap, "version")
+    lockAmount = _decodeSwap(encodedSwap, "amount") - _decodeSwap(encodedSwap, "feeForLP")
+    expireTs = _decodeSwap(encodedSwap, "expireTs")
     until = Txn.first_valid_time() + cp.LOCK_TIME_PERIOD
-    swapId = getSwapId(encodedSwap, initiator)
+    swapId = _getSwapId(encodedSwap, initiator)
     lp = Txn.sender()
-    tokenIndexOut = decodeSwap(encodedSwap, "outToken")
-    assetIdOut = getAssetId(tokenIndexOut)
-    lockedSwap = lockedSwapFrom(until, lp, tokenIndexOut)
+    tokenIndexOut = _decodeSwap(encodedSwap, "outToken")
+    assetIdOut = _getAssetId(tokenIndexOut)
+    lockedSwap = _lockedSwapFrom(lp, until, recipient)
 
     conditions = And(
         outChain == cp.SHORT_COIN_TYPE,
         version == cp.MESON_PROTOCOL_VERSION,
         until < expireTs - Int(300),  # 5 minutes     # todo: check if it's 300 or 300,000
-        checkRequestSignature(encodedSwap, r, sv, initiator),
+        _checkRequestSignature(encodedSwap, r, sv, initiator),
         poolTokenBalance(lp, tokenIndexOut) > lockAmount,
     )
 
     return Seq(
         Assert(conditions),
-        App.localPut(
-            lp,
-            wrapTokenKeyName("MesonLP:", assetIdOut),
-            poolTokenBalance(lp, tokenIndexOut) - lockAmount,
-        ),
+        _updateBalanceOfPool(lp, assetIdOut, poolTokenBalance(lp, tokenIndexOut) - lockAmount),
         Assert(App.box_create(swapId, Int(38))),
         App.box_put(swapId, lockedSwap),
         Approve(),
@@ -116,12 +112,12 @@ def release(
 ) -> Int:
     # todo: Txn.sender() == <tx.origin>?
     # todo: _onlyPremiumManager
-    feeWaived = extraItemFrom("_feeWaived", encodedSwap)
-    expireTs = decodeSwap(encodedSwap, "expireTs")
-    swapId = getSwapId(encodedSwap, initiator)
-    tokenIndexOut = decodeSwap(encodedSwap, "outToken")
-    assetIdOut = getAssetId(tokenIndexOut)
-    serviceFee = extraItemFrom("_serviceFee", encodedSwap)
+    feeWaived = _extraItemFrom("_feeWaived", encodedSwap)
+    expireTs = _decodeSwap(encodedSwap, "expireTs")
+    swapId = _getSwapId(encodedSwap, initiator)
+    tokenIndexOut = _decodeSwap(encodedSwap, "outToken")
+    assetIdOut = _getAssetId(tokenIndexOut)
+    serviceFee = _extraItemFrom("_serviceFee", encodedSwap)
     releaseAmount = ScratchVar(TealType.uint64)
 
     conditions = And(
@@ -132,27 +128,27 @@ def release(
         ),
         recipient != cp.ZERO_ADDRESS,
         expireTs > Txn.first_valid_time(),
-        checkReleaseSignature(encodedSwap, recipient, r, sv, initiator),
+        _checkReleaseSignature(encodedSwap, recipient, r, sv, initiator),
     )
 
     return Seq(
         Assert(conditions),
         App.box_put(swapId, cp.LOCKED_SWAP_FINISH),
         releaseAmount.store(
-            decodeSwap(encodedSwap, "amount") - decodeSwap(encodedSwap, "feeForLP")
+            _decodeSwap(encodedSwap, "amount") - _decodeSwap(encodedSwap, "feeForLP")
         ),
         If(
             Not(feeWaived),
             Seq(
                 releaseAmount.store(releaseAmount.load() - serviceFee),
                 App.globalPut(
-                    wrapTokenKeyName("ProtocolFee:", assetIdOut),
-                    App.globalGet(wrapTokenKeyName("ProtocolFee:", assetIdOut))
+                    _wrapTokenKeyName("ProtocolFee:", assetIdOut),
+                    App.globalGet(_wrapTokenKeyName("ProtocolFee:", assetIdOut))
                     + serviceFee,
                 ),
             ),
         ),  # todo: transferToContract
-        safeTransfer(assetIdOut, recipient, releaseAmount.load(), tokenIndexOut),
+        _safeTransfer(assetIdOut, recipient, releaseAmount.load(), tokenIndexOut),
         Approve(),
     )
 

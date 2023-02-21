@@ -16,15 +16,15 @@ def postSwap(
     sv: Int,
     initiator: Bytes,
 ) -> Int:
-    inChain = decodeSwap(encodedSwap, "inChain")
-    version = decodeSwap(encodedSwap, "version")
-    amount = decodeSwap(encodedSwap, "amount")
-    delta = decodeSwap(encodedSwap, "expireTs") - Txn.first_valid_time()
+    inChain = _decodeSwap(encodedSwap, "inChain")
+    version = _decodeSwap(encodedSwap, "version")
+    amount = _decodeSwap(encodedSwap, "amount")
+    delta = _decodeSwap(encodedSwap, "expireTs") - Txn.first_valid_time()
     from_address = Txn.sender()  # todo
     lp_not_bonded = cp.ZERO_ADDRESS
-    tokenIndexIn = decodeSwap(encodedSwap, "inToken")
-    assetIdIn = getAssetId(tokenIndexIn)
-    postingValue = postedSwapFrom(lp_not_bonded, initiator, from_address)
+    tokenIndexIn = _decodeSwap(encodedSwap, "inToken")
+    assetIdIn = _getAssetId(tokenIndexIn)
+    postingValue = _postedSwapFrom(lp_not_bonded, initiator, from_address)
 
     conditions = And(
         # TODO: check encodedSwap length = 32
@@ -33,8 +33,8 @@ def postSwap(
         amount < cp.MAX_SWAP_AMOUNT,
         delta > cp.MIN_BOND_TIME_PERIOD,
         delta < cp.MAX_BOND_TIME_PERIOD,
-        checkRequestSignature(encodedSwap, r, sv, initiator),
-        validateTokenReceived(
+        _checkRequestSignature(encodedSwap, r, sv, initiator),
+        _validateTokenReceived(
             Int(1), assetIdIn, amount, tokenIndexIn
         ),  # the user must call `AssetTransfer` at Gtxn[1], and call `postSwap` at Gtxn[0]
     )
@@ -52,7 +52,7 @@ def bondSwap(encodedSwap: Bytes):
     return Seq(
         postedSwap_get := App.box_get(encodedSwap),
         Assert(postedSwap_get.hasValue()),
-        Assert(itemFromPosted("lp", postedSwap_get.value()) == cp.ZERO_ADDRESS),
+        Assert(_itemFromPosted("lp", postedSwap_get.value()) == cp.ZERO_ADDRESS),
         App.box_replace(encodedSwap, Int(32), Txn.sender()),
         Approve(),
     )
@@ -66,13 +66,13 @@ def executeSwap(
     depositToPool: Int,
     recipient: Bytes,  # This variable is bring from Txn.accounts
 ) -> Int:
-    expireTs = decodeSwap(encodedSwap, "expireTs")
-    amount = decodeSwap(encodedSwap, "amount")
-    tokenIndexIn = decodeSwap(encodedSwap, "inToken")
-    assetIdIn = getAssetId(tokenIndexIn)
+    expireTs = _decodeSwap(encodedSwap, "expireTs")
+    amount = _decodeSwap(encodedSwap, "amount")
+    tokenIndexIn = _decodeSwap(encodedSwap, "inToken")
+    assetIdIn = _getAssetId(tokenIndexIn)
     postedSwap = ScratchVar(TealType.bytes)
-    initiator = itemFromPosted("initiator", postedSwap.load())
-    lp = itemFromPosted("lp", postedSwap.load())
+    initiator = _itemFromPosted("initiator", postedSwap.load())
+    lp = _itemFromPosted("lp", postedSwap.load())
 
     postedSwap_value = Seq(
         postedSwap_get := App.box_get(encodedSwap),
@@ -81,7 +81,7 @@ def executeSwap(
     )
     conditions = And(
         postedSwap.load() != cp.POSTED_SWAP_EXPIRE,
-        checkReleaseSignature(encodedSwap, recipient, r, sv, initiator),
+        _checkReleaseSignature(encodedSwap, recipient, r, sv, initiator),
     )
 
     return Seq(
@@ -96,10 +96,10 @@ def executeSwap(
             depositToPool,
             App.localPut(
                 lp,
-                wrapTokenKeyName("MesonLP:", assetIdIn),
+                _wrapTokenKeyName("MesonLP:", assetIdIn),
                 poolTokenBalance(lp, tokenIndexIn) + amount,
             ),
-            safeTransfer(assetIdIn, lp, amount, tokenIndexIn),
+            _safeTransfer(assetIdIn, lp, amount, tokenIndexIn),
         ),
         Approve(),
     )
