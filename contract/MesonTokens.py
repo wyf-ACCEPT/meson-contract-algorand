@@ -38,8 +38,8 @@ def addSupportToken(assetId: Int, tokenIndex: Int) -> Int:
     # todo: onlyDeployer
     # todo: Optin
 
-    #   Bytes('AssetId:17207135') -> Int(1)
-    #   Bytes('TokenIndex:1') -> Int(17207135)
+    #   Bytes('TokenIndexOfAsset:17207135') -> Int(1)
+    #   Bytes('AssetIdOfToken:1') -> Int(17207135)
     return Seq(
         Assert(tokenIndex < Int(256)),
         Assert(tokenIndex != Int(0)),
