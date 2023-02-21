@@ -71,11 +71,11 @@ def validateTokenReceived(
 # split variables: 0x|version|amount|salt|fee|expireTs|outChain|outToken|inChain|inToken
 # index(start-end): 0x | 0:1 | 1:6 | 6:16 | 16:21 | 21:26 | 26:28 | 28:29 | 29:31 | 31:32
 # index(start-length): 0x | 0,1 | 1,5 | 6,10 | 16,5 | 21,5 | 26,2 | 28,1 | 29,2 | 31,1
-def itemFrom(
-    item: str,
+def decodeSwap(
     encodedSwap: Bytes,
+    field: str,
 ) -> Int:
-    match item:  # match-case sentence is a new feature of python==3.10
+    match field:  # match-case sentence is a new feature of python==3.10
         case "version":
             content = Substring(encodedSwap, Int(0), Int(1))
         case "amount":
@@ -108,11 +108,11 @@ def extraItemFrom(
     extraItem: str,
     encodedSwap: Bytes,
 ) -> Int:
-    saltUsing = itemFrom("saltUsing", encodedSwap)
+    saltUsing = decodeSwap(encodedSwap, "saltUsing")
     match extraItem:
         case "_serviceFee":
             content = (
-                itemFrom("amount", encodedSwap) * cp.SERVICE_FEE_RATE / Int(10_000)
+                decodeSwap(encodedSwap, "amount") * cp.SERVICE_FEE_RATE / Int(10_000)
             )
         case "_willTransferToContract":
             content = saltUsing & Int(0x80) == Int(0)
