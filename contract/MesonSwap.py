@@ -12,8 +12,8 @@ def initMesonSwap() -> Int:
 # Step 1.1: Different to the one in solidity, this `postSwap` can only called by user!
 def postSwap(
     encodedSwap: Bytes,
-    r_s: Int,
-    v: Int,
+    r: Int,
+    sv: Int,
 ) -> Int:
     inChain = itemFrom("inChain", encodedSwap)
     version = itemFrom("version", encodedSwap)
@@ -31,7 +31,7 @@ def postSwap(
         amount < cp.MAX_SWAP_AMOUNT,
         delta > cp.MIN_BOND_TIME_PERIOD,
         delta < cp.MAX_BOND_TIME_PERIOD,
-        checkRequestSignature(encodedSwap, r_s, v, initiator),
+        checkRequestSignature(encodedSwap, r, sv, initiator),
         validateTokenReceived(
             Int(1), assetIdIn, amount, tokenIndexIn
         ),  # the user must call `AssetTransfer` at Gtxn[1], and call `postSwap` at Gtxn[0]
@@ -59,8 +59,8 @@ def bondSwap(encodedSwap: Bytes):
 # Step 4.
 def executeSwap(
     encodedSwap: Bytes,
-    r_s: Int,
-    v: Int,
+    r: Int,
+    sv: Int,
     depositToPool: Int,
     recipient: Bytes,  # This variable is bring from Txn.accounts
 ) -> Int:
@@ -79,7 +79,7 @@ def executeSwap(
     )
     conditions = And(
         postedSwap.load() != cp.POSTED_SWAP_EXPIRE,
-        checkReleaseSignature(encodedSwap, recipient, r_s, v, initiator),
+        checkReleaseSignature(encodedSwap, recipient, r, sv, initiator),
     )
 
     return Seq(
