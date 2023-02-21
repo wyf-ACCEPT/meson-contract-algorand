@@ -46,29 +46,29 @@ def addSupportToken(assetId: Int, tokenIndex: Int) -> Int:
         Assert(assetId != Int(0)),
         Assert(_getAssetId(tokenIndex) == Int(0)),
         Assert(_getTokenIndex(assetId) == Int(0)),
-        App.globalPut(_wrapTokenKeyName("TokenIndex:", tokenIndex), assetId),
-        App.globalPut(_wrapTokenKeyName("AssetId:", assetId), tokenIndex),
+        App.globalPut(_storageKey("AssetIdOfToken:", tokenIndex), assetId),
+        App.globalPut(_storageKey("TokenIndexOfAsset:", assetId), tokenIndex),
         # App.localPut(
         #     Global.current_application_address(),
-        #     _wrapTokenKeyName('MesonLP:', assetId),
+        #     _storageKey('MesonLP:', assetId),
         #     Int(0)
         # ), # use globalPut because an app cannot has local variables of itself (?)
-        App.globalPut(_wrapTokenKeyName("ProtocolFee:", assetId), Int(0)),
+        App.globalPut(_storageKey("ProtocolFee:", assetId), Int(0)),
         optInToken(assetId),
         Approve(),
     )
 
 
-def _wrapTokenKeyName(suffix: str, index: Int) -> Bytes:
+def _storageKey(suffix: str, index: Int) -> Bytes:
     return Concat(Bytes(suffix), Itob(index))
 
 
 def _getTokenIndex(assetId: Int) -> Int:
-    return App.globalGet(_wrapTokenKeyName("AssetId:", assetId))
+    return App.globalGet(_storageKey("TokenIndexOfAsset:", assetId))
 
 
 def _getAssetId(tokenIndex: Int) -> Int:
-    return App.globalGet(_wrapTokenKeyName("TokenIndex:", tokenIndex))
+    return App.globalGet(_storageKey("AssetIdOfToken:", tokenIndex))
 
 
 def poolTokenBalance(
@@ -76,7 +76,7 @@ def poolTokenBalance(
     tokenIndex: Int,
 ) -> Int:
     assetId = _getAssetId(tokenIndex)
-    return App.localGet(lp, _wrapTokenKeyName("MesonLP:", assetId))
+    return App.localGet(lp, _storageKey("MesonLP:", assetId))
 
 
 # getSupportedTokens: View explorer directly to get supported token list!

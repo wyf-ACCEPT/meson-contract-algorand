@@ -96,7 +96,7 @@ def executeSwap(
             depositToPool,
             App.localPut(
                 lp,
-                _wrapTokenKeyName("MesonLP:", assetIdIn),
+                _storageKey("MesonLP:", assetIdIn),
                 poolTokenBalance(lp, tokenIndexIn) + amount,
             ),
             _safeTransfer(assetIdIn, lp, amount, tokenIndexIn),

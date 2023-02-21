@@ -14,7 +14,7 @@ def _updateBalanceOfPool(
     assetId: Int,
     balance: Int,
 ) -> Int:
-    return App.localPut(lp, _wrapTokenKeyName("MesonLP:", assetId), balance)
+    return App.localPut(lp, _storageKey("MesonLP:", assetId), balance)
 
 def depositAndRegister(
     amount: Int,
@@ -142,8 +142,8 @@ def release(
             Seq(
                 releaseAmount.store(releaseAmount.load() - serviceFee),
                 App.globalPut(
-                    _wrapTokenKeyName("ProtocolFee:", assetIdOut),
-                    App.globalGet(_wrapTokenKeyName("ProtocolFee:", assetIdOut))
+                    _storageKey("ProtocolFee:", assetIdOut),
+                    App.globalGet(_storageKey("ProtocolFee:", assetIdOut))
                     + serviceFee,
                 ),
             ),
