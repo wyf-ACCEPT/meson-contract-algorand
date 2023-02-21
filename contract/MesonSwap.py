@@ -21,9 +21,9 @@ def postSwap(
     delta = itemFrom("expireTs", encodedSwap) - Txn.first_valid_time()
     initiator = Txn.sender()  # todo
     lp_not_bonded = cp.ZERO_ADDRESS
-    enumIndexIn = itemFrom("inToken", encodedSwap)
-    tokenIndexIn = getTokenIndex(enumIndexIn)
-    postingValue = postedSwapFrom(initiator, lp_not_bonded, enumIndexIn)
+    tokenIndexIn = itemFrom("inToken", encodedSwap)
+    assetIdIn = getAssetId(tokenIndexIn)
+    postingValue = postedSwapFrom(initiator, lp_not_bonded, tokenIndexIn)
 
     conditions = And(
         inChain == cp.SHORT_COIN_TYPE,
@@ -33,7 +33,7 @@ def postSwap(
         delta < cp.MAX_BOND_TIME_PERIOD,
         checkRequestSignature(encodedSwap, r_s, v, initiator),
         validateTokenReceived(
-            Int(1), tokenIndexIn, amount, enumIndexIn
+            Int(1), assetIdIn, amount, tokenIndexIn
         ),  # the user must call `AssetTransfer` at Gtxn[1], and call `postSwap` at Gtxn[0]
     )
 
@@ -66,8 +66,8 @@ def executeSwap(
 ) -> Int:
     expireTs = itemFrom("expireTs", encodedSwap)
     amount = itemFrom("amount", encodedSwap)
-    enumIndexIn = itemFrom("inToken", encodedSwap)
-    tokenIndexIn = getTokenIndex(enumIndexIn)
+    tokenIndexIn = itemFrom("inToken", encodedSwap)
+    assetIdIn = getAssetId(tokenIndexIn)
     postedSwap = ScratchVar(TealType.bytes)
     initiator = itemFromPosted("initiator", postedSwap.load())
     lp = itemFromPosted("lp", postedSwap.load())
@@ -94,10 +94,10 @@ def executeSwap(
             depositToPool,
             App.localPut(
                 lp,
-                wrapTokenKeyName("MesonLP:", tokenIndexIn),
-                poolTokenBalance(lp, enumIndexIn) + amount,
+                wrapTokenKeyName("MesonLP:", assetIdIn),
+                poolTokenBalance(lp, tokenIndexIn) + amount,
             ),
-            safeTransfer(tokenIndexIn, lp, amount, enumIndexIn),
+            safeTransfer(assetIdIn, lp, amount, tokenIndexIn),
         ),
         Approve(),
     )

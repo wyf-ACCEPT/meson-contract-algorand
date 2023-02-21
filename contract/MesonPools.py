@@ -11,19 +11,19 @@ def initMesonPools() -> Int:
 
 def depositAndRegister(
     amount: Int,
-    tokenIndex: Int,
+    assetId: Int,
 ) -> Int:
     lp = Txn.sender()
-    enumIndex = getEnumIndex(tokenIndex)
+    tokenIndex = getTokenIndex(assetId)
 
     conditions = And(
-        validateTokenReceived(Int(1), tokenIndex, amount, enumIndex),
-        poolTokenBalance(lp, enumIndex) == Int(0),
+        validateTokenReceived(Int(1), assetId, amount, tokenIndex),
+        poolTokenBalance(lp, tokenIndex) == Int(0),
     )
 
     return Seq(
         Assert(conditions),
-        App.localPut(lp, wrapTokenKeyName("MesonLP:", tokenIndex), amount),
+        App.localPut(lp, wrapTokenKeyName("MesonLP:", assetId), amount),
         Approve(),
     )
 
@@ -31,17 +31,17 @@ def depositAndRegister(
 # todo: this function (maybe) can merge with the above one
 def deposit(
     amount: Int,
-    tokenIndex: Int,
+    assetId: Int,
 ) -> Int:
     lp = Txn.sender()
-    enumIndex = getEnumIndex(tokenIndex)
+    tokenIndex = getTokenIndex(assetId)
 
     return Seq(
-        Assert(validateTokenReceived(Int(1), tokenIndex, amount, enumIndex)),
+        Assert(validateTokenReceived(Int(1), assetId, amount, tokenIndex)),
         App.localPut(
             lp,
-            wrapTokenKeyName("MesonLP:", tokenIndex),
-            poolTokenBalance(lp, enumIndex) + amount,
+            wrapTokenKeyName("MesonLP:", assetId),
+            poolTokenBalance(lp, tokenIndex) + amount,
         ),
         Approve(),
     )
@@ -50,19 +50,19 @@ def deposit(
 # Step 0.3: lp withdraw
 def withdraw(
     amount: Int,
-    tokenIndex: Int,
+    assetId: Int,
 ) -> Int:
     lp = Txn.sender()
-    enumIndex = getEnumIndex(tokenIndex)
+    tokenIndex = getTokenIndex(assetId)
 
     return Seq(
-        Assert(poolTokenBalance(lp, enumIndex) >= amount),
+        Assert(poolTokenBalance(lp, tokenIndex) >= amount),
         App.localPut(
             lp,
-            wrapTokenKeyName("MesonLP:", tokenIndex),
-            poolTokenBalance(lp, enumIndex) - amount,
+            wrapTokenKeyName("MesonLP:", assetId),
+            poolTokenBalance(lp, tokenIndex) - amount,
         ),
-        safeTransfer(tokenIndex, lp, amount, enumIndex),
+        safeTransfer(assetId, lp, amount, tokenIndex),
         Approve(),
     )
 
@@ -81,24 +81,24 @@ def lock(
     until = Txn.first_valid_time() + cp.LOCK_TIME_PERIOD
     swapId = getSwapId(encodedSwap, initiator)
     lp = Txn.sender()
-    enumIndexOut = itemFrom("outToken", encodedSwap)
-    tokenIndexOut = getTokenIndex(enumIndexOut)
-    lockedSwap = lockedSwapFrom(until, lp, enumIndexOut)
+    tokenIndexOut = itemFrom("outToken", encodedSwap)
+    assetIdOut = getAssetId(tokenIndexOut)
+    lockedSwap = lockedSwapFrom(until, lp, tokenIndexOut)
 
     conditions = And(
         outChain == cp.SHORT_COIN_TYPE,
         version == cp.MESON_PROTOCOL_VERSION,
         until < expireTs - Int(300),  # 5 minutes     # todo: check if it's 300 or 300,000
         checkRequestSignature(encodedSwap, r_s, v, initiator),
-        poolTokenBalance(lp, enumIndexOut) > lockAmount,
+        poolTokenBalance(lp, tokenIndexOut) > lockAmount,
     )
 
     return Seq(
         Assert(conditions),
         App.localPut(
             lp,
-            wrapTokenKeyName("MesonLP:", tokenIndexOut),
-            poolTokenBalance(lp, enumIndexOut) - lockAmount,
+            wrapTokenKeyName("MesonLP:", assetIdOut),
+            poolTokenBalance(lp, tokenIndexOut) - lockAmount,
         ),
         Assert(App.box_create(swapId, Int(38))),
         App.box_put(swapId, lockedSwap),
@@ -119,8 +119,8 @@ def release(
     feeWaived = extraItemFrom("_feeWaived", encodedSwap)
     expireTs = itemFrom("expireTs", encodedSwap)
     swapId = getSwapId(encodedSwap, initiator)
-    enumIndexOut = itemFrom("outToken", encodedSwap)
-    tokenIndexOut = getTokenIndex(enumIndexOut)
+    tokenIndexOut = itemFrom("outToken", encodedSwap)
+    assetIdOut = getAssetId(tokenIndexOut)
     serviceFee = extraItemFrom("_serviceFee", encodedSwap)
     releaseAmount = ScratchVar(TealType.uint64)
 
@@ -146,13 +146,13 @@ def release(
             Seq(
                 releaseAmount.store(releaseAmount.load() - serviceFee),
                 App.globalPut(
-                    wrapTokenKeyName("ProtocolFee:", tokenIndexOut),
-                    App.globalGet(wrapTokenKeyName("ProtocolFee:", tokenIndexOut))
+                    wrapTokenKeyName("ProtocolFee:", assetIdOut),
+                    App.globalGet(wrapTokenKeyName("ProtocolFee:", assetIdOut))
                     + serviceFee,
                 ),
             ),
         ),  # todo: transferToContract
-        safeTransfer(tokenIndexOut, recipient, releaseAmount.load(), enumIndexOut),
+        safeTransfer(assetIdOut, recipient, releaseAmount.load(), tokenIndexOut),
         Approve(),
     )
 
