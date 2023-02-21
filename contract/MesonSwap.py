@@ -14,20 +14,22 @@ def postSwap(
     encodedSwap: Bytes,
     r: Int,
     sv: Int,
+    initiator: Bytes,
 ) -> Int:
     inChain = decodeSwap(encodedSwap, "inChain")
     version = decodeSwap(encodedSwap, "version")
     amount = decodeSwap(encodedSwap, "amount")
     delta = decodeSwap(encodedSwap, "expireTs") - Txn.first_valid_time()
-    initiator = Txn.sender()  # todo
+    from_address = Txn.sender()  # todo
     lp_not_bonded = cp.ZERO_ADDRESS
     tokenIndexIn = decodeSwap(encodedSwap, "inToken")
     assetIdIn = getAssetId(tokenIndexIn)
-    postingValue = postedSwapFrom(initiator, lp_not_bonded, tokenIndexIn)
+    postingValue = postedSwapFrom(lp_not_bonded, initiator, from_address)
 
     conditions = And(
-        inChain == cp.SHORT_COIN_TYPE,
+        # TODO: check encodedSwap length = 32
         version == cp.MESON_PROTOCOL_VERSION,
+        inChain == cp.SHORT_COIN_TYPE,
         amount < cp.MAX_SWAP_AMOUNT,
         delta > cp.MIN_BOND_TIME_PERIOD,
         delta < cp.MAX_BOND_TIME_PERIOD,
@@ -39,7 +41,7 @@ def postSwap(
 
     return Seq(
         Assert(conditions),
-        Assert(App.box_create(encodedSwap, Int(65))),
+        Assert(App.box_create(encodedSwap, Int(65))), # XXX: what is 65?
         App.box_put(encodedSwap, postingValue),
         Approve(),
     )
