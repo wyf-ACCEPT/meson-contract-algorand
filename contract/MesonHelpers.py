@@ -82,7 +82,7 @@ def decodeSwap(
             content = Substring(encodedSwap, Int(1), Int(6))
         case "salt":
             content = Substring(encodedSwap, Int(6), Int(16))
-        case "saltUsing":
+        case "saltHeader":
             content = Substring(encodedSwap, Int(6), Int(7))
         case "saltData":
             content = Substring(encodedSwap, Int(8), Int(16))
@@ -108,18 +108,18 @@ def extraItemFrom(
     extraItem: str,
     encodedSwap: Bytes,
 ) -> Int:
-    saltUsing = decodeSwap(encodedSwap, "saltUsing")
+    saltHeader = decodeSwap(encodedSwap, "saltHeader")
     match extraItem:
         case "_serviceFee":
             content = (
                 decodeSwap(encodedSwap, "amount") * cp.SERVICE_FEE_RATE / Int(10_000)
             )
         case "_willTransferToContract":
-            content = saltUsing & Int(0x80) == Int(0)
+            content = saltHeader & Int(0x80) == Int(0)
         case "_feeWaived":
-            content = saltUsing & Int(0x40) > Int(0)
+            content = saltHeader & Int(0x40) > Int(0)
         case "_signNonTyped":
-            content = saltUsing & Int(0x08) > Int(0)
+            content = saltHeader & Int(0x08) > Int(0)
 
     return content
 
