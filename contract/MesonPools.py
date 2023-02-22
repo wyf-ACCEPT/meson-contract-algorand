@@ -83,7 +83,7 @@ def lock(
     lp = Txn.sender()
     tokenIndexOut = decodeSwap("outToken", encodedSwap)
     assetIdOut = getAssetId(tokenIndexOut)
-    lockedSwap = lockedSwapFrom(until, lp, tokenIndexOut)
+    lockedSwap = lockedSwapFrom(lp, until)
 
     conditions = And(
         outChain == cp.SHORT_COIN_TYPE,

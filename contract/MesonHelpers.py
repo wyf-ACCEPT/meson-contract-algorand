@@ -126,60 +126,53 @@ def extraItemFrom(
 
 # ---------------------------- poolToken, lockedSwap, postedSwap ----------------------------
 
-# `postedSwap` in format of `initiator:address(32)|lp:address(32)|tokenIndex:uint8(1)`
+# `postedSwap(84)` in format of `lp:address(32)|initiator:eth_address(20)|from_address:address(32)`
 # Not the same one as in solidity!
 def itemFromPosted(
-    item: str,
+    field: str,
     postedSwap: Bytes,  # Bytes(65)
 ) -> Int:
-    match item:
-        case "initiator":
-            content = Substring(postedSwap, Int(0), Int(32))
+    match field:
         case "lp":
-            content = Substring(postedSwap, Int(32), Int(64))
-        case "inToken":
-            content = Substring(postedSwap, Int(64), Int(65))
+            content = Substring(postedSwap, Int(0), Int(32))
+        case "initiator":
+            content = Substring(postedSwap, Int(32), Int(52))
+        case "from_address":
+            content = Substring(postedSwap, Int(52), Int(84))
         case _:
             assert False
     return content
 
 
 def postedSwapFrom(
-    initiator: Bytes,
     lp: Bytes,
-    tokenIndex: Int,
+    initiator: Bytes,
+    from_address: Bytes,
 ) -> Bytes:
-    return Concat(initiator, lp, Substring(Itob(tokenIndex), Int(7), Int(8)))
+    return Concat(lp, initiator, from_address)
 
 
-# `lockedSwap` in format of `until:uint40(5)|lp:address(32)|tokenIndex:uint8(1)`
+# `lockedSwap(37)` in format of `lp:address(32)|until:uint40(5)`
 # Not the same one as in solidity!
 def itemFromLocked(
-    item: str,
+    field: str,
     lockedSwap: Bytes,  # Bytes(41)
 ) -> Int:
-    match item:
-        case "until":
-            content = Btoi(Substring(lockedSwap, Int(0), Int(5)))
+    match field:
         case "lp":
-            content = Substring(lockedSwap, Int(5), Int(37))
-        case "outToken":
-            content = Substring(lockedSwap, Int(37), Int(38))
+            content = Substring(lockedSwap, Int(0), Int(32))
+        case "until":
+            content = Btoi(Substring(lockedSwap, Int(32), Int(37)))
         case _:
             assert False
     return content
 
 
 def lockedSwapFrom(
-    until: Int,
     lp: Bytes,
-    tokenIndex: Int,
+    until: Int,
 ) -> Bytes:
-    return Concat(
-        Substring(Itob(until), Int(3), Int(8)),
-        lp,
-        Substring(Itob(tokenIndex), Int(7), Int(8)),
-    )
+    return Concat(lp, Substring(Itob(until), Int(3), Int(8)))
 
 
 # ---------------------------------- other utils functions ----------------------------------
