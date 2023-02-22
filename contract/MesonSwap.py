@@ -14,7 +14,7 @@ def postSwap(
     encodedSwap: Bytes,
     r: Int,
     s_v: Int,
-    initiator: Bytes,
+    initiator: Bytes,   # This is an etheruem address
 ) -> Int:
     inChain = decodeSwap("inChain", encodedSwap)
     version = decodeSwap("version", encodedSwap)
@@ -139,6 +139,7 @@ def mesonSwapMainFunc():
                         Txn.application_args[1],
                         Btoi(Txn.application_args[2]),
                         Btoi(Txn.application_args[3]),
+                        Txn.application_args[4],
                     ),
                 ],
                 [

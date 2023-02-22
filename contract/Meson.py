@@ -44,6 +44,7 @@ def mesonMainFunc():
                         Txn.application_args[1],
                         Btoi(Txn.application_args[2]),
                         Btoi(Txn.application_args[3]),
+                        Txn.application_args[4],
                         Txn.accounts[1],
                     ),
                 ],
@@ -53,8 +54,7 @@ def mesonMainFunc():
                         Txn.application_args[1],
                         Btoi(Txn.application_args[2]),
                         Btoi(Txn.application_args[3]),
-                        Txn.accounts[1],
-                        Txn.accounts[2],
+                        Txn.application_args[4],
                     ),
                 ],
                 [
@@ -84,6 +84,7 @@ def mesonMainFunc():
                         Txn.application_args[1],
                         Btoi(Txn.application_args[2]),
                         Btoi(Txn.application_args[3]),
+                        Txn.application_args[4],
                     ),
                 ],
                 [

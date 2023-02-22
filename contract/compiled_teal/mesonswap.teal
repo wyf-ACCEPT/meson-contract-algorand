@@ -52,7 +52,7 @@ assert
 load 4
 store 3
 load 3
-byte 0x1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+byte 0x111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 !=
 int 1
 &&
@@ -66,7 +66,7 @@ int 3600
 <
 bnz main_l19
 txna ApplicationArgs 1
-byte 0x1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+byte 0x111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 box_put
 main_l12:
 txna ApplicationArgs 4
@@ -94,7 +94,7 @@ main_l15:
 itxn_begin
 int axfer
 itxn_field TypeEnum
-byte "EnumIndex:"
+byte "TokenIndex:"
 txna ApplicationArgs 1
 extract 31 1
 btoi
@@ -103,7 +103,7 @@ concat
 app_global_get
 itxn_field XferAsset
 load 3
-extract 32 32
+extract 0 32
 itxn_field AssetReceiver
 load 6
 itxn_field AssetAmount
@@ -121,9 +121,9 @@ store 6
 b main_l15
 main_l18:
 load 3
-extract 32 32
+extract 0 32
 byte "MesonLP:"
-byte "EnumIndex:"
+byte "TokenIndex:"
 txna ApplicationArgs 1
 extract 31 1
 btoi
@@ -133,9 +133,9 @@ app_global_get
 itob
 concat
 load 3
-extract 32 32
+extract 0 32
 byte "MesonLP:"
-byte "EnumIndex:"
+byte "TokenIndex:"
 txna ApplicationArgs 1
 extract 31 1
 btoi
@@ -164,7 +164,7 @@ store 1
 load 2
 assert
 load 1
-extract 32 32
+extract 0 32
 byte 0x0000000000000000000000000000000000000000000000000000000000000000
 ==
 assert
@@ -176,14 +176,14 @@ int 1
 return
 main_l21:
 txna ApplicationArgs 1
-extract 29 2
-btoi
-int 283
-==
-txna ApplicationArgs 1
 extract 0 1
 btoi
 int 1
+==
+txna ApplicationArgs 1
+extract 29 2
+btoi
+int 283
 ==
 &&
 txna ApplicationArgs 1
@@ -251,7 +251,7 @@ global CurrentApplicationAddress
 &&
 int 1
 gtxns XferAsset
-byte "EnumIndex:"
+byte "TokenIndex:"
 txna ApplicationArgs 1
 extract 31 1
 btoi
@@ -270,18 +270,14 @@ btoi
 &&
 assert
 txna ApplicationArgs 1
-int 65
+int 84
 box_create
 assert
 txna ApplicationArgs 1
-txn Sender
 byte 0x0000000000000000000000000000000000000000000000000000000000000000
+txna ApplicationArgs 4
 concat
-txna ApplicationArgs 1
-extract 31 1
-btoi
-itob
-extract 7 1
+txn Sender
 concat
 box_put
 int 1
@@ -309,7 +305,7 @@ txna Assets 0
 int 0
 !=
 assert
-byte "EnumIndex:"
+byte "TokenIndex:"
 txna ApplicationArgs 1
 btoi
 itob
@@ -318,7 +314,7 @@ app_global_get
 int 0
 ==
 assert
-byte "TokenIndex:"
+byte "AssetId:"
 txna Assets 0
 itob
 concat
@@ -326,14 +322,14 @@ app_global_get
 int 0
 ==
 assert
-byte "EnumIndex:"
+byte "TokenIndex:"
 txna ApplicationArgs 1
 btoi
 itob
 concat
 txna Assets 0
 app_global_put
-byte "TokenIndex:"
+byte "AssetId:"
 txna Assets 0
 itob
 concat

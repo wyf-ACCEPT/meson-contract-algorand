@@ -72,7 +72,8 @@ def lock(
     encodedSwap: Bytes,
     r: Int,
     s_v: Int,
-    initiator: Bytes,  # This variable is bring from Txn.accounts
+    initiator: Bytes,  # This is an etheruem address
+    recipient: Bytes,  # This variable is bring from Txn.accounts
 ) -> Int:
     outChain = decodeSwap("outChain", encodedSwap)
     version = decodeSwap("version", encodedSwap)
@@ -83,7 +84,7 @@ def lock(
     lp = Txn.sender()
     tokenIndexOut = decodeSwap("outToken", encodedSwap)
     assetIdOut = getAssetId(tokenIndexOut)
-    lockedSwap = lockedSwapFrom(lp, until)
+    lockedSwap = lockedSwapFrom(lp, until, recipient)
 
     conditions = And(
         outChain == cp.SHORT_COIN_TYPE,
@@ -96,7 +97,7 @@ def lock(
     return Seq(
         Assert(conditions),
         updateBalanceOfPool(lp, assetIdOut, poolTokenBalance(lp, tokenIndexOut) - lockAmount),
-        Assert(App.box_create(swapId, Int(37))),
+        Assert(App.box_create(swapId, Int(69))),
         App.box_put(swapId, lockedSwap),
         Approve(),
     )
@@ -107,8 +108,7 @@ def release(
     encodedSwap: Bytes,
     r: Int,
     s_v: Int,
-    initiator: Bytes,  # This variable is bring from Txn.accounts
-    recipient: Bytes,  # This variable is bring from Txn.accounts
+    initiator: Bytes,  # This is an etheruem address
 ) -> Int:
     # todo: Txn.sender() == <tx.origin>?
     # todo: _onlyPremiumManager
@@ -119,21 +119,23 @@ def release(
     assetIdOut = getAssetId(tokenIndexOut)
     serviceFee = extraItemFrom("_serviceFee", encodedSwap)
     releaseAmount = ScratchVar(TealType.uint64)
+    recipient = ScratchVar(TealType.bytes)
 
     conditions = And(
-        Seq(
-            lockedSwap_get := App.box_get(swapId),
-            Assert(lockedSwap_get.hasValue()),
-            lockedSwap_get.value() != cp.LOCKED_SWAP_FINISH,
-        ),
-        recipient != cp.ZERO_ADDRESS,
+        recipient.load() != cp.ZERO_ADDRESS,
         expireTs > Txn.first_valid_time(),
-        checkReleaseSignature(encodedSwap, recipient, r, s_v, initiator),
+        checkReleaseSignature(encodedSwap, recipient.load(), r, s_v, initiator),
     )
 
     return Seq(
-        Assert(conditions),
+        recipient.store(Seq(
+            lockedSwap_get := App.box_get(swapId),
+            Assert(lockedSwap_get.hasValue()),
+            Assert(lockedSwap_get.value() != cp.LOCKED_SWAP_FINISH),
+            itemFromLocked("recipient", lockedSwap_get.value()),
+        )),
         App.box_put(swapId, cp.LOCKED_SWAP_FINISH),
+        Assert(conditions),
         releaseAmount.store(
             decodeSwap("amount", encodedSwap) - decodeSwap("feeForLP", encodedSwap)
         ),
@@ -148,7 +150,7 @@ def release(
                 ),
             ),
         ),  # todo: transferToContract
-        safeTransfer(assetIdOut, recipient, releaseAmount.load(), tokenIndexOut),
+        safeTransfer(assetIdOut, recipient.load(), releaseAmount.load(), tokenIndexOut),
         Approve(),
     )
 
@@ -188,6 +190,7 @@ def mesonPoolsMainFunc():
                         Txn.application_args[1],
                         Btoi(Txn.application_args[2]),
                         Btoi(Txn.application_args[3]),
+                        Txn.application_args[4],
                         Txn.accounts[1],
                     ),
                 ],
@@ -197,8 +200,7 @@ def mesonPoolsMainFunc():
                         Txn.application_args[1],
                         Btoi(Txn.application_args[2]),
                         Btoi(Txn.application_args[3]),
-                        Txn.accounts[1],
-                        Txn.accounts[2],
+                        Txn.application_args[4],
                     ),
                 ],
                 [

@@ -16,7 +16,7 @@ class ConfigParams:
     SERVICE_FEE_RATE = Int(10)
     
     ZERO_ADDRESS = Bytes(bytes.fromhex('00' * 32))          # 32 bytes
-    LOCKED_SWAP_FINISH = Bytes(bytes.fromhex('11' * 37))    # 38 bytes
+    LOCKED_SWAP_FINISH = Bytes(bytes.fromhex('11' * 69))    # 38 bytes
     POSTED_SWAP_EXPIRE = Bytes(bytes.fromhex('11' * 84))    # 65 bytes
     
     # ETH_SIGN_HEADER = Bytes("\x19Ethereum Signed Message:\n32");

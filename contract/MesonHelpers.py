@@ -152,7 +152,7 @@ def postedSwapFrom(
     return Concat(lp, initiator, from_address)
 
 
-# `lockedSwap(37)` in format of `lp:address(32)|until:uint40(5)`
+# `lockedSwap(69)` in format of `lp:address(32)|until:uint40(5)|recipient:address(32)`
 # Not the same one as in solidity!
 def itemFromLocked(
     field: str,
@@ -163,6 +163,8 @@ def itemFromLocked(
             content = Substring(lockedSwap, Int(0), Int(32))
         case "until":
             content = Btoi(Substring(lockedSwap, Int(32), Int(37)))
+        case "recipient":
+            content = Substring(lockedSwap, Int(37), Int(69))
         case _:
             assert False
     return content
@@ -171,8 +173,9 @@ def itemFromLocked(
 def lockedSwapFrom(
     lp: Bytes,
     until: Int,
+    recipient: Bytes,
 ) -> Bytes:
-    return Concat(lp, Substring(Itob(until), Int(3), Int(8)))
+    return Concat(lp, Substring(Itob(until), Int(3), Int(8)), recipient)
 
 
 # ---------------------------------- other utils functions ----------------------------------
