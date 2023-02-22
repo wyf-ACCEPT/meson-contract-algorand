@@ -15,13 +15,13 @@ def postSwap(
     r_s: Int,
     v: Int,
 ) -> Int:
-    inChain = itemFrom("inChain", encodedSwap)
-    version = itemFrom("version", encodedSwap)
-    amount = itemFrom("amount", encodedSwap)
-    delta = itemFrom("expireTs", encodedSwap) - Txn.first_valid_time()
+    inChain = decodeSwap("inChain", encodedSwap)
+    version = decodeSwap("version", encodedSwap)
+    amount = decodeSwap("amount", encodedSwap)
+    delta = decodeSwap("expireTs", encodedSwap) - Txn.first_valid_time()
     initiator = Txn.sender()  # todo
     lp_not_bonded = cp.ZERO_ADDRESS
-    tokenIndexIn = itemFrom("inToken", encodedSwap)
+    tokenIndexIn = decodeSwap("inToken", encodedSwap)
     assetIdIn = getAssetId(tokenIndexIn)
     postingValue = postedSwapFrom(initiator, lp_not_bonded, tokenIndexIn)
 
@@ -64,9 +64,9 @@ def executeSwap(
     depositToPool: Int,
     recipient: Bytes,  # This variable is bring from Txn.accounts
 ) -> Int:
-    expireTs = itemFrom("expireTs", encodedSwap)
-    amount = itemFrom("amount", encodedSwap)
-    tokenIndexIn = itemFrom("inToken", encodedSwap)
+    expireTs = decodeSwap("expireTs", encodedSwap)
+    amount = decodeSwap("amount", encodedSwap)
+    tokenIndexIn = decodeSwap("inToken", encodedSwap)
     assetIdIn = getAssetId(tokenIndexIn)
     postedSwap = ScratchVar(TealType.bytes)
     initiator = itemFromPosted("initiator", postedSwap.load())

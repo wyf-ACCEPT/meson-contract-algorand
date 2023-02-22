@@ -74,14 +74,14 @@ def lock(
     v: Int,
     initiator: Bytes,  # This variable is bring from Txn.accounts
 ) -> Int:
-    outChain = itemFrom("outChain", encodedSwap)
-    version = itemFrom("version", encodedSwap)
-    lockAmount = itemFrom("amount", encodedSwap) - itemFrom("feeForLP", encodedSwap)
-    expireTs = itemFrom("expireTs", encodedSwap)
+    outChain = decodeSwap("outChain", encodedSwap)
+    version = decodeSwap("version", encodedSwap)
+    lockAmount = decodeSwap("amount", encodedSwap) - decodeSwap("feeForLP", encodedSwap)
+    expireTs = decodeSwap("expireTs", encodedSwap)
     until = Txn.first_valid_time() + cp.LOCK_TIME_PERIOD
     swapId = getSwapId(encodedSwap, initiator)
     lp = Txn.sender()
-    tokenIndexOut = itemFrom("outToken", encodedSwap)
+    tokenIndexOut = decodeSwap("outToken", encodedSwap)
     assetIdOut = getAssetId(tokenIndexOut)
     lockedSwap = lockedSwapFrom(until, lp, tokenIndexOut)
 
@@ -117,9 +117,9 @@ def release(
     # todo: Txn.sender() == <tx.origin>?
     # todo: _onlyPremiumManager
     feeWaived = extraItemFrom("_feeWaived", encodedSwap)
-    expireTs = itemFrom("expireTs", encodedSwap)
+    expireTs = decodeSwap("expireTs", encodedSwap)
     swapId = getSwapId(encodedSwap, initiator)
-    tokenIndexOut = itemFrom("outToken", encodedSwap)
+    tokenIndexOut = decodeSwap("outToken", encodedSwap)
     assetIdOut = getAssetId(tokenIndexOut)
     serviceFee = extraItemFrom("_serviceFee", encodedSwap)
     releaseAmount = ScratchVar(TealType.uint64)
@@ -139,7 +139,7 @@ def release(
         Assert(conditions),
         App.box_put(swapId, cp.LOCKED_SWAP_FINISH),
         releaseAmount.store(
-            itemFrom("amount", encodedSwap) - itemFrom("feeForLP", encodedSwap)
+            decodeSwap("amount", encodedSwap) - decodeSwap("feeForLP", encodedSwap)
         ),
         If(
             Not(feeWaived),

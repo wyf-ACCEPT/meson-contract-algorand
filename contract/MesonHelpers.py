@@ -71,18 +71,18 @@ def validateTokenReceived(
 # split variables: 0x|version|amount|salt|fee|expireTs|outChain|outToken|inChain|inToken
 # index(start-end): 0x | 0:1 | 1:6 | 6:16 | 16:21 | 21:26 | 26:28 | 28:29 | 29:31 | 31:32
 # index(start-length): 0x | 0,1 | 1,5 | 6,10 | 16,5 | 21,5 | 26,2 | 28,1 | 29,2 | 31,1
-def itemFrom(
-    item: str,
+def decodeSwap(
+    field: str,
     encodedSwap: Bytes,
 ) -> Int:
-    match item:  # match-case sentence is a new feature of python==3.10
+    match field:  # match-case sentence is a new feature of python==3.10
         case "version":
             content = Substring(encodedSwap, Int(0), Int(1))
         case "amount":
             content = Substring(encodedSwap, Int(1), Int(6))
         case "salt":
             content = Substring(encodedSwap, Int(6), Int(16))
-        case "saltUsing":
+        case "saltHeader":
             content = Substring(encodedSwap, Int(6), Int(7))
         case "saltData":
             content = Substring(encodedSwap, Int(8), Int(16))
@@ -108,18 +108,18 @@ def extraItemFrom(
     extraItem: str,
     encodedSwap: Bytes,
 ) -> Int:
-    saltUsing = itemFrom("saltUsing", encodedSwap)
+    saltHeader = decodeSwap("saltHeader", encodedSwap)
     match extraItem:
         case "_serviceFee":
             content = (
-                itemFrom("amount", encodedSwap) * cp.SERVICE_FEE_RATE / Int(10_000)
+                decodeSwap("amount", encodedSwap) * cp.SERVICE_FEE_RATE / Int(10_000)
             )
         case "_willTransferToContract":
-            content = saltUsing & Int(0x80) == Int(0)
+            content = saltHeader & Int(0x80) == Int(0)
         case "_feeWaived":
-            content = saltUsing & Int(0x40) > Int(0)
+            content = saltHeader & Int(0x40) > Int(0)
         case "_signNonTyped":
-            content = saltUsing & Int(0x08) > Int(0)
+            content = saltHeader & Int(0x08) > Int(0)
 
     return content
 
