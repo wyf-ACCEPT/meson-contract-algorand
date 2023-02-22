@@ -9,6 +9,14 @@ def initMesonPools() -> Int:
     return Approve()
 
 
+def updateBalanceOfPool(
+    lp: Bytes,
+    assetId: Int,
+    balance: Int,
+):
+    return App.localPut(lp, storageKey("MesonLP:", assetId), balance)
+
+
 def depositAndRegister(
     amount: Int,
     assetId: Int,
@@ -23,7 +31,7 @@ def depositAndRegister(
 
     return Seq(
         Assert(conditions),
-        App.localPut(lp, storageKey("MesonLP:", assetId), amount),
+        updateBalanceOfPool(lp, assetId, amount),
         Approve(),
     )
 
@@ -38,11 +46,7 @@ def deposit(
 
     return Seq(
         Assert(validateTokenReceived(Int(1), assetId, amount, tokenIndex)),
-        App.localPut(
-            lp,
-            storageKey("MesonLP:", assetId),
-            poolTokenBalance(lp, tokenIndex) + amount,
-        ),
+        updateBalanceOfPool(lp, assetId, poolTokenBalance(lp, tokenIndex) + amount),
         Approve(),
     )
 
@@ -57,11 +61,7 @@ def withdraw(
 
     return Seq(
         Assert(poolTokenBalance(lp, tokenIndex) >= amount),
-        App.localPut(
-            lp,
-            storageKey("MesonLP:", assetId),
-            poolTokenBalance(lp, tokenIndex) - amount,
-        ),
+        updateBalanceOfPool(lp, assetId, poolTokenBalance(lp, tokenIndex) - amount),
         safeTransfer(assetId, lp, amount, tokenIndex),
         Approve(),
     )
@@ -95,11 +95,7 @@ def lock(
 
     return Seq(
         Assert(conditions),
-        App.localPut(
-            lp,
-            storageKey("MesonLP:", assetIdOut),
-            poolTokenBalance(lp, tokenIndexOut) - lockAmount,
-        ),
+        updateBalanceOfPool(lp, assetIdOut, poolTokenBalance(lp, tokenIndexOut) - lockAmount),
         Assert(App.box_create(swapId, Int(37))),
         App.box_put(swapId, lockedSwap),
         Approve(),
