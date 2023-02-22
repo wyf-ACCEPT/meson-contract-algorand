@@ -70,8 +70,8 @@ def withdraw(
 # Step 2.
 def lock(
     encodedSwap: Bytes,
-    r_s: Int,
-    v: Int,
+    r: Int,
+    s_v: Int,
     initiator: Bytes,  # This variable is bring from Txn.accounts
 ) -> Int:
     outChain = decodeSwap("outChain", encodedSwap)
@@ -89,7 +89,7 @@ def lock(
         outChain == cp.SHORT_COIN_TYPE,
         version == cp.MESON_PROTOCOL_VERSION,
         until < expireTs - Int(300),  # 5 minutes     # todo: check if it's 300 or 300,000
-        checkRequestSignature(encodedSwap, r_s, v, initiator),
+        checkRequestSignature(encodedSwap, r, s_v, initiator),
         poolTokenBalance(lp, tokenIndexOut) > lockAmount,
     )
 
@@ -105,8 +105,8 @@ def lock(
 # Step 3.
 def release(
     encodedSwap: Bytes,
-    r_s: Int,
-    v: Int,
+    r: Int,
+    s_v: Int,
     initiator: Bytes,  # This variable is bring from Txn.accounts
     recipient: Bytes,  # This variable is bring from Txn.accounts
 ) -> Int:
@@ -128,7 +128,7 @@ def release(
         ),
         recipient != cp.ZERO_ADDRESS,
         expireTs > Txn.first_valid_time(),
-        checkReleaseSignature(encodedSwap, recipient, r_s, v, initiator),
+        checkReleaseSignature(encodedSwap, recipient, r, s_v, initiator),
     )
 
     return Seq(
