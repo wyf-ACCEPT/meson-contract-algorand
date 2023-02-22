@@ -82,8 +82,8 @@ def mesonMainFunc():
                     Txn.application_args[0] == Bytes("postSwap"),
                     postSwap(
                         Txn.application_args[1],
-                        Btoi(Txn.application_args[2]),
-                        Btoi(Txn.application_args[3]),
+                        Txn.application_args[2],
+                        Txn.application_args[3],
                         Txn.application_args[4],
                     ),
                 ],
@@ -95,8 +95,8 @@ def mesonMainFunc():
                     Txn.application_args[0] == Bytes("executeSwap"),
                     executeSwap(
                         Txn.application_args[1],
-                        Btoi(Txn.application_args[2]),
-                        Btoi(Txn.application_args[3]),
+                        Txn.application_args[2],
+                        Txn.application_args[3],
                         Btoi(Txn.application_args[4]),
                         Txn.accounts[1],
                     ),

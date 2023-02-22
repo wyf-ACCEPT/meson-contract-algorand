@@ -214,8 +214,8 @@ def getSwapId(
 # ---------------------------------- signature ----------------------------------
 def checkRequestSignature(
     encodedSwap: Bytes,
-    r: Int,
-    s_v: Int,
+    r: Bytes,
+    s_v: Bytes,
     signer: Bytes,
 ) -> Int:
     # todo
@@ -225,8 +225,8 @@ def checkRequestSignature(
 def checkReleaseSignature(
     encodedSwap: Bytes,
     recipient: Bytes,
-    r: Int,
-    s_v: Int,
+    r: Bytes,
+    s_v: Bytes,
     signer: Bytes,
 ) -> Int:
     # todo

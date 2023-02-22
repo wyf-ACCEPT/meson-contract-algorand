@@ -78,6 +78,14 @@ def poolTokenBalance(
     return App.localGet(lp, storageKey("MesonLP:", assetId))
 
 
+def updateBalanceOfPool(
+    lp: Bytes,
+    assetId: Int,
+    balance: Int,
+):
+    return App.localPut(lp, storageKey("MesonLP:", assetId), balance)
+
+
 # getSupportedTokens: View explorer directly to get supported token list!
 def mesontoken_program_func():
     return Cond(

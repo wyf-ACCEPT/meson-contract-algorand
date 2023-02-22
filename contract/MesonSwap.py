@@ -12,8 +12,8 @@ def initMesonSwap() -> Int:
 # Step 1.1: Different to the one in solidity, this `postSwap` can only called by user!
 def postSwap(
     encodedSwap: Bytes,
-    r: Int,
-    s_v: Int,
+    r: Bytes,
+    s_v: Bytes,
     initiator: Bytes,   # This is an etheruem address
 ) -> Int:
     inChain = decodeSwap("inChain", encodedSwap)
@@ -53,7 +53,7 @@ def bondSwap(encodedSwap: Bytes):
         postedSwap_get := App.box_get(encodedSwap),
         Assert(postedSwap_get.hasValue()),
         Assert(itemFromPosted("lp", postedSwap_get.value()) == cp.ZERO_ADDRESS),
-        App.box_replace(encodedSwap, Int(32), Txn.sender()),
+        App.box_replace(encodedSwap, Int(0), Txn.sender()),
         Approve(),
     )
 
@@ -61,8 +61,8 @@ def bondSwap(encodedSwap: Bytes):
 # Step 4.
 def executeSwap(
     encodedSwap: Bytes,
-    r: Int,
-    s_v: Int,
+    r: Bytes,
+    s_v: Bytes,
     depositToPool: Int,
     recipient: Bytes,  # This variable is bring from Txn.accounts
 ) -> Int:
@@ -94,11 +94,7 @@ def executeSwap(
         ),
         If(
             depositToPool,
-            App.localPut(
-                lp,
-                storageKey("MesonLP:", assetIdIn),
-                poolTokenBalance(lp, tokenIndexIn) + amount,
-            ),
+            updateBalanceOfPool(lp, assetIdIn, poolTokenBalance(lp, tokenIndexIn) + amount),
             safeTransfer(assetIdIn, lp, amount, tokenIndexIn),
         ),
         Approve(),
@@ -137,8 +133,8 @@ def mesonSwapMainFunc():
                     Txn.application_args[0] == Bytes("postSwap"),
                     postSwap(
                         Txn.application_args[1],
-                        Btoi(Txn.application_args[2]),
-                        Btoi(Txn.application_args[3]),
+                        Txn.application_args[2],
+                        Txn.application_args[3],
                         Txn.application_args[4],
                     ),
                 ],
@@ -150,8 +146,8 @@ def mesonSwapMainFunc():
                     Txn.application_args[0] == Bytes("executeSwap"),
                     executeSwap(
                         Txn.application_args[1],
-                        Btoi(Txn.application_args[2]),
-                        Btoi(Txn.application_args[3]),
+                        Txn.application_args[2],
+                        Txn.application_args[3],
                         Btoi(Txn.application_args[4]),
                         Txn.accounts[1],
                     ),

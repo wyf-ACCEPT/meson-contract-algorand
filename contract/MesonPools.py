@@ -9,14 +9,6 @@ def initMesonPools() -> Int:
     return Approve()
 
 
-def updateBalanceOfPool(
-    lp: Bytes,
-    assetId: Int,
-    balance: Int,
-):
-    return App.localPut(lp, storageKey("MesonLP:", assetId), balance)
-
-
 def depositAndRegister(
     amount: Int,
     assetId: Int,
@@ -70,8 +62,8 @@ def withdraw(
 # Step 2.
 def lock(
     encodedSwap: Bytes,
-    r: Int,
-    s_v: Int,
+    r: Bytes,
+    s_v: Bytes,
     initiator: Bytes,  # This is an etheruem address
     recipient: Bytes,  # This variable is bring from Txn.accounts
 ) -> Int:
@@ -106,8 +98,8 @@ def lock(
 # Step 3.
 def release(
     encodedSwap: Bytes,
-    r: Int,
-    s_v: Int,
+    r: Bytes,
+    s_v: Bytes,
     initiator: Bytes,  # This is an etheruem address
 ) -> Int:
     # todo: Txn.sender() == <tx.origin>?
@@ -188,8 +180,8 @@ def mesonPoolsMainFunc():
                     Txn.application_args[0] == Bytes("lock"),
                     lock(
                         Txn.application_args[1],
-                        Btoi(Txn.application_args[2]),
-                        Btoi(Txn.application_args[3]),
+                        Txn.application_args[2],
+                        Txn.application_args[3],
                         Txn.application_args[4],
                         Txn.accounts[1],
                     ),
@@ -198,8 +190,8 @@ def mesonPoolsMainFunc():
                     Txn.application_args[0] == Bytes("release"),
                     release(
                         Txn.application_args[1],
-                        Btoi(Txn.application_args[2]),
-                        Btoi(Txn.application_args[3]),
+                        Txn.application_args[2],
+                        Txn.application_args[3],
                         Txn.application_args[4],
                     ),
                 ],
