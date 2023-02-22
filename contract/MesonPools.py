@@ -23,7 +23,7 @@ def depositAndRegister(
 
     return Seq(
         Assert(conditions),
-        App.localPut(lp, wrapTokenKeyName("MesonLP:", assetId), amount),
+        App.localPut(lp, storageKey("MesonLP:", assetId), amount),
         Approve(),
     )
 
@@ -40,7 +40,7 @@ def deposit(
         Assert(validateTokenReceived(Int(1), assetId, amount, tokenIndex)),
         App.localPut(
             lp,
-            wrapTokenKeyName("MesonLP:", assetId),
+            storageKey("MesonLP:", assetId),
             poolTokenBalance(lp, tokenIndex) + amount,
         ),
         Approve(),
@@ -59,7 +59,7 @@ def withdraw(
         Assert(poolTokenBalance(lp, tokenIndex) >= amount),
         App.localPut(
             lp,
-            wrapTokenKeyName("MesonLP:", assetId),
+            storageKey("MesonLP:", assetId),
             poolTokenBalance(lp, tokenIndex) - amount,
         ),
         safeTransfer(assetId, lp, amount, tokenIndex),
@@ -97,10 +97,10 @@ def lock(
         Assert(conditions),
         App.localPut(
             lp,
-            wrapTokenKeyName("MesonLP:", assetIdOut),
+            storageKey("MesonLP:", assetIdOut),
             poolTokenBalance(lp, tokenIndexOut) - lockAmount,
         ),
-        Assert(App.box_create(swapId, Int(38))),
+        Assert(App.box_create(swapId, Int(37))),
         App.box_put(swapId, lockedSwap),
         Approve(),
     )
@@ -146,8 +146,8 @@ def release(
             Seq(
                 releaseAmount.store(releaseAmount.load() - serviceFee),
                 App.globalPut(
-                    wrapTokenKeyName("ProtocolFee:", assetIdOut),
-                    App.globalGet(wrapTokenKeyName("ProtocolFee:", assetIdOut))
+                    storageKey("ProtocolFee:", assetIdOut),
+                    App.globalGet(storageKey("ProtocolFee:", assetIdOut))
                     + serviceFee,
                 ),
             ),

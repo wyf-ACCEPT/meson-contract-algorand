@@ -43,31 +43,31 @@ def addSupportToken(assetId: Int, tokenIndex: Int) -> Int:
         Assert(tokenIndex < Int(256)),
         Assert(tokenIndex != Int(0)),   # It represents the token index of Meson Contract.
         Assert(assetId != Int(0)),      # It represents the token index on Algorand blockchain.
-        Assert(App.globalGet(wrapTokenKeyName("TokenIndex:", tokenIndex)) == Int(0)),
-        Assert(App.globalGet(wrapTokenKeyName("AssetId:", assetId)) == Int(0)),
-        App.globalPut(wrapTokenKeyName("TokenIndex:", tokenIndex), assetId),
-        App.globalPut(wrapTokenKeyName("AssetId:", assetId), tokenIndex),
+        Assert(getAssetId(tokenIndex) == Int(0)),
+        Assert(getTokenIndex(assetId) == Int(0)),
+        App.globalPut(storageKey("TokenIndex:", tokenIndex), assetId),
+        App.globalPut(storageKey("AssetId:", assetId), tokenIndex),
         # App.localPut(
         #     Global.current_application_address(),
-        #     wrapTokenKeyName('MesonLP:', assetId),
+        #     storageKey('MesonLP:', assetId),
         #     Int(0)
         # ), # use globalPut because an app cannot has local variables of itself (?)
-        App.globalPut(wrapTokenKeyName("ProtocolFee:", assetId), Int(0)),
+        App.globalPut(storageKey("ProtocolFee:", assetId), Int(0)),
         optInToken(assetId),
         Approve(),
     )
 
 
-def wrapTokenKeyName(suffix: str, index: Int) -> Bytes:
+def storageKey(suffix: str, index: Int) -> Bytes:
     return Concat(Bytes(suffix), Itob(index))
 
 
 def getTokenIndex(assetId: Int) -> Int:
-    return App.globalGet(wrapTokenKeyName("AssetId:", assetId))
+    return App.globalGet(storageKey("AssetId:", assetId))
 
 
 def getAssetId(tokenIndex: Int) -> Int:
-    return App.globalGet(wrapTokenKeyName("TokenIndex:", tokenIndex))
+    return App.globalGet(storageKey("TokenIndex:", tokenIndex))
 
 
 def poolTokenBalance(
@@ -75,7 +75,7 @@ def poolTokenBalance(
     tokenIndex: Int,
 ) -> Int:
     assetId = getAssetId(tokenIndex)
-    return App.localGet(lp, wrapTokenKeyName("MesonLP:", assetId))
+    return App.localGet(lp, storageKey("MesonLP:", assetId))
 
 
 # getSupportedTokens: View explorer directly to get supported token list!
