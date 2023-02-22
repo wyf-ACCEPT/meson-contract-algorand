@@ -4,15 +4,15 @@ from MesonConfig import ConfigParams as cp
 
 # ---------------------------------- transfer and deposit ----------------------------------
 def safeTransfer(
-    tokenIndex: Int,
+    assetId: Int,
     recipient: Bytes,
     amount: Int,
-    enumIndex: Int,
+    tokenIndex: Int,
 ):
     amount_adjust: Int = ScratchVar(TealType.uint64)
     return Seq(
         If(
-            needAdjustAmount(enumIndex) == Int(1),
+            needAdjustAmount(tokenIndex) == Int(1),
             amount_adjust.store(amount * Int(1_000_000_000_000)),
             amount_adjust.store(amount),
         ),
@@ -20,7 +20,7 @@ def safeTransfer(
         InnerTxnBuilder.SetFields(
             {
                 TxnField.type_enum: TxnType.AssetTransfer,
-                TxnField.xfer_asset: tokenIndex,
+                TxnField.xfer_asset: assetId,
                 TxnField.asset_receiver: recipient,
                 TxnField.asset_amount: amount_adjust.load(),
             }
@@ -35,15 +35,15 @@ def safeTransfer(
 
 def validateTokenReceived(
     txid: Int,
-    tokenIndex: Int,
+    assetId: Int,
     amount: Int,
-    enumIndex: Int,
+    tokenIndex: Int,
 ) -> Int:
     amount_adjust: Int = ScratchVar(TealType.uint64)
     return Seq(
         Assert(amount > Int(0)),
         If(
-            needAdjustAmount(enumIndex) == Int(1),
+            needAdjustAmount(tokenIndex) == Int(1),
             amount_adjust.store(amount * Int(1_000_000_000_000)),
             amount_adjust.store(amount),
         ),
@@ -51,7 +51,7 @@ def validateTokenReceived(
             Gtxn[txid].type_enum() == TxnType.AssetTransfer,
             Gtxn[txid].sender() == Txn.sender(),
             Gtxn[txid].asset_receiver() == Global.current_application_address(),
-            Gtxn[txid].xfer_asset() == tokenIndex,
+            Gtxn[txid].xfer_asset() == assetId,
             Gtxn[txid].asset_amount() == amount,
         ),
     )
@@ -126,7 +126,7 @@ def extraItemFrom(
 
 # ---------------------------- poolToken, lockedSwap, postedSwap ----------------------------
 
-# `postedSwap` in format of `initiator:address(32)|lp:address(32)|enumIndex:uint8(1)`
+# `postedSwap` in format of `initiator:address(32)|lp:address(32)|tokenIndex:uint8(1)`
 # Not the same one as in solidity!
 def itemFromPosted(
     item: str,
@@ -147,12 +147,12 @@ def itemFromPosted(
 def postedSwapFrom(
     initiator: Bytes,
     lp: Bytes,
-    enumIndex: Int,
+    tokenIndex: Int,
 ) -> Bytes:
-    return Concat(initiator, lp, Substring(Itob(enumIndex), Int(7), Int(8)))
+    return Concat(initiator, lp, Substring(Itob(tokenIndex), Int(7), Int(8)))
 
 
-# `lockedSwap` in format of `until:uint40(5)|lp:address(32)|enumIndex:uint8(1)`
+# `lockedSwap` in format of `until:uint40(5)|lp:address(32)|tokenIndex:uint8(1)`
 # Not the same one as in solidity!
 def itemFromLocked(
     item: str,
@@ -173,22 +173,18 @@ def itemFromLocked(
 def lockedSwapFrom(
     until: Int,
     lp: Bytes,
-    enumIndex: Int,
+    tokenIndex: Int,
 ) -> Bytes:
     return Concat(
         Substring(Itob(until), Int(3), Int(8)),
         lp,
-        Substring(Itob(enumIndex), Int(7), Int(8)),
+        Substring(Itob(tokenIndex), Int(7), Int(8)),
     )
 
 
 # ---------------------------------- other utils functions ----------------------------------
-
-#   function _needAdjustAmount(uint8 tokenIndex) internal pure returns (bool) {
-#     return tokenIndex > 32 && tokenIndex < 255;
-#   }
-def needAdjustAmount(enumIndex: Int) -> Int:
-    return And(enumIndex > Int(32), enumIndex < Int(255))
+def needAdjustAmount(tokenIndex: Int) -> Int:
+    return And(tokenIndex > Int(32), tokenIndex < Int(255))
 
 
 # `abi.encode` in solidity:

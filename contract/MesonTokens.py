@@ -1,7 +1,7 @@
 from pyteal import *
 
 
-def optInToken(tokenIndex: Int):
+def optInToken(assetId: Int):
     return Seq(
         InnerTxnBuilder.Begin(),
         InnerTxnBuilder.SetFields(
@@ -9,7 +9,7 @@ def optInToken(tokenIndex: Int):
                 # TxnField.sender: Global.current_application_address(),
                 # TxnField.asset_sender: Global.current_application_address(),
                 TxnField.type_enum: TxnType.AssetTransfer,
-                TxnField.xfer_asset: tokenIndex,
+                TxnField.xfer_asset: assetId,
                 TxnField.asset_receiver: Global.current_application_address(),
                 TxnField.asset_amount: Int(0),
             }
@@ -34,27 +34,26 @@ def optInApp(appIndex: Int):
 
 
 # Directly using global index to map:
-def addSupportToken(tokenIndex: Int, enumIndex: Int) -> Int:
+def addSupportToken(assetId: Int, tokenIndex: Int) -> Int:
     # todo: onlyDeployer
-    # todo: Optin
 
-    #   Bytes('TokenIndex:17207135') -> Int(1)
-    #   Bytes('EnumIndex:1') -> Int(17207135)
+    #   Bytes('AssetId:\x00\x00\x00\x00\x01\x06\x8f_') -> Int(1)
+    #   Bytes('TokenIndex:\x00\x00\x00\x00\x00\x00\x00\x01') -> Int(0x1068f5f)
     return Seq(
-        Assert(enumIndex < Int(256)),
-        Assert(enumIndex != Int(0)),
-        Assert(tokenIndex != Int(0)),
-        Assert(App.globalGet(wrapTokenKeyName("EnumIndex:", enumIndex)) == Int(0)),
+        Assert(tokenIndex < Int(256)),
+        Assert(tokenIndex != Int(0)),   # It represents the token index of Meson Contract.
+        Assert(assetId != Int(0)),      # It represents the token index on Algorand blockchain.
         Assert(App.globalGet(wrapTokenKeyName("TokenIndex:", tokenIndex)) == Int(0)),
-        App.globalPut(wrapTokenKeyName("EnumIndex:", enumIndex), tokenIndex),
-        App.globalPut(wrapTokenKeyName("TokenIndex:", tokenIndex), enumIndex),
+        Assert(App.globalGet(wrapTokenKeyName("AssetId:", assetId)) == Int(0)),
+        App.globalPut(wrapTokenKeyName("TokenIndex:", tokenIndex), assetId),
+        App.globalPut(wrapTokenKeyName("AssetId:", assetId), tokenIndex),
         # App.localPut(
         #     Global.current_application_address(),
-        #     wrapTokenKeyName('MesonLP:', tokenIndex),
+        #     wrapTokenKeyName('MesonLP:', assetId),
         #     Int(0)
         # ), # use globalPut because an app cannot has local variables of itself (?)
-        App.globalPut(wrapTokenKeyName("ProtocolFee:", tokenIndex), Int(0)),
-        optInToken(tokenIndex),
+        App.globalPut(wrapTokenKeyName("ProtocolFee:", assetId), Int(0)),
+        optInToken(assetId),
         Approve(),
     )
 
@@ -63,20 +62,20 @@ def wrapTokenKeyName(suffix: str, index: Int) -> Bytes:
     return Concat(Bytes(suffix), Itob(index))
 
 
-def getEnumIndex(tokenIndex: Int) -> Int:
+def getTokenIndex(assetId: Int) -> Int:
+    return App.globalGet(wrapTokenKeyName("AssetId:", assetId))
+
+
+def getAssetId(tokenIndex: Int) -> Int:
     return App.globalGet(wrapTokenKeyName("TokenIndex:", tokenIndex))
-
-
-def getTokenIndex(enumIndex: Int) -> Int:
-    return App.globalGet(wrapTokenKeyName("EnumIndex:", enumIndex))
 
 
 def poolTokenBalance(
     lp: Bytes,
-    enumIndex: Int,
+    tokenIndex: Int,
 ) -> Int:
-    tokenIndex = getTokenIndex(enumIndex)
-    return App.localGet(lp, wrapTokenKeyName("MesonLP:", tokenIndex))
+    assetId = getAssetId(tokenIndex)
+    return App.localGet(lp, wrapTokenKeyName("MesonLP:", assetId))
 
 
 # getSupportedTokens: View explorer directly to get supported token list!
