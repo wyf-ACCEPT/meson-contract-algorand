@@ -1,0 +1,884 @@
+#pragma version 8
+txn ApplicationID
+int 0
+==
+bnz main_l52
+txn OnCompletion
+int OptIn
+==
+bnz main_l51
+txn OnCompletion
+int CloseOut
+==
+txn OnCompletion
+int UpdateApplication
+==
+||
+txn OnCompletion
+int DeleteApplication
+==
+||
+bnz main_l50
+txn OnCompletion
+int NoOp
+==
+bnz main_l5
+err
+main_l5:
+txna ApplicationArgs 0
+byte "addSupportToken"
+==
+bnz main_l49
+txna ApplicationArgs 0
+byte "lock"
+==
+bnz main_l48
+txna ApplicationArgs 0
+byte "release"
+==
+bnz main_l42
+txna ApplicationArgs 0
+byte "depositAndRegister"
+==
+bnz main_l38
+txna ApplicationArgs 0
+byte "deposit"
+==
+bnz main_l34
+txna ApplicationArgs 0
+byte "withdraw"
+==
+bnz main_l30
+txna ApplicationArgs 0
+byte "postSwap"
+==
+bnz main_l26
+txna ApplicationArgs 0
+byte "bondSwap"
+==
+bnz main_l25
+txna ApplicationArgs 0
+byte "executeSwap"
+==
+bnz main_l15
+err
+main_l15:
+txna ApplicationArgs 1
+box_get
+store 12
+store 11
+load 12
+assert
+load 11
+store 10
+load 10
+byte 0x1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+!=
+int 1
+&&
+assert
+txna ApplicationArgs 1
+extract 21 5
+btoi
+txn FirstValidTime
+int 3600
++
+<
+bnz main_l24
+txna ApplicationArgs 1
+byte 0x1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+box_put
+main_l17:
+txna ApplicationArgs 4
+btoi
+bnz main_l23
+txna ApplicationArgs 1
+extract 31 1
+btoi
+int 32
+>
+txna ApplicationArgs 1
+extract 31 1
+btoi
+int 255
+<
+&&
+int 1
+==
+bnz main_l22
+txna ApplicationArgs 1
+extract 1 5
+btoi
+store 13
+main_l20:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+byte "TokenIndex:"
+txna ApplicationArgs 1
+extract 31 1
+btoi
+itob
+concat
+app_global_get
+itxn_field XferAsset
+load 10
+extract 32 32
+itxn_field AssetReceiver
+load 13
+itxn_field AssetAmount
+itxn_submit
+main_l21:
+int 1
+return
+main_l22:
+txna ApplicationArgs 1
+extract 1 5
+btoi
+int 1000000000000
+*
+store 13
+b main_l20
+main_l23:
+load 10
+extract 32 32
+byte "MesonLP:"
+byte "TokenIndex:"
+txna ApplicationArgs 1
+extract 31 1
+btoi
+itob
+concat
+app_global_get
+itob
+concat
+load 10
+extract 32 32
+byte "MesonLP:"
+byte "TokenIndex:"
+txna ApplicationArgs 1
+extract 31 1
+btoi
+itob
+concat
+app_global_get
+itob
+concat
+app_local_get
+txna ApplicationArgs 1
+extract 1 5
+btoi
++
+app_local_put
+b main_l21
+main_l24:
+txna ApplicationArgs 1
+box_del
+assert
+b main_l17
+main_l25:
+txna ApplicationArgs 1
+box_get
+store 9
+store 8
+load 9
+assert
+load 8
+extract 32 32
+byte 0x0000000000000000000000000000000000000000000000000000000000000000
+==
+assert
+txna ApplicationArgs 1
+int 32
+txn Sender
+box_replace
+int 1
+return
+main_l26:
+txna ApplicationArgs 1
+extract 29 2
+btoi
+int 283
+==
+txna ApplicationArgs 1
+extract 0 1
+btoi
+int 1
+==
+&&
+txna ApplicationArgs 1
+extract 1 5
+btoi
+int 100000000000
+<
+&&
+txna ApplicationArgs 1
+extract 21 5
+btoi
+txn FirstValidTime
+-
+int 3600
+>
+&&
+txna ApplicationArgs 1
+extract 21 5
+btoi
+txn FirstValidTime
+-
+int 7200
+<
+&&
+int 1
+&&
+txna ApplicationArgs 1
+extract 1 5
+btoi
+int 0
+>
+assert
+txna ApplicationArgs 1
+extract 31 1
+btoi
+int 32
+>
+txna ApplicationArgs 1
+extract 31 1
+btoi
+int 255
+<
+&&
+int 1
+==
+bnz main_l29
+txna ApplicationArgs 1
+extract 1 5
+btoi
+store 7
+main_l28:
+int 1
+gtxns TypeEnum
+int axfer
+==
+int 1
+gtxns Sender
+txn Sender
+==
+&&
+int 1
+gtxns AssetReceiver
+global CurrentApplicationAddress
+==
+&&
+int 1
+gtxns XferAsset
+byte "TokenIndex:"
+txna ApplicationArgs 1
+extract 31 1
+btoi
+itob
+concat
+app_global_get
+==
+&&
+int 1
+gtxns AssetAmount
+txna ApplicationArgs 1
+extract 1 5
+btoi
+==
+&&
+&&
+assert
+txna ApplicationArgs 1
+int 65
+box_create
+assert
+txna ApplicationArgs 1
+txn Sender
+byte 0x0000000000000000000000000000000000000000000000000000000000000000
+concat
+txna ApplicationArgs 1
+extract 31 1
+btoi
+itob
+extract 7 1
+concat
+box_put
+int 1
+return
+main_l29:
+txna ApplicationArgs 1
+extract 1 5
+btoi
+int 1000000000000
+*
+store 7
+b main_l28
+main_l30:
+txn Sender
+byte "MesonLP:"
+byte "TokenIndex:"
+byte "AssetId:"
+txna Assets 0
+itob
+concat
+app_global_get
+itob
+concat
+app_global_get
+itob
+concat
+app_local_get
+txna ApplicationArgs 1
+btoi
+>=
+assert
+txn Sender
+byte "MesonLP:"
+txna Assets 0
+itob
+concat
+txn Sender
+byte "MesonLP:"
+byte "TokenIndex:"
+byte "AssetId:"
+txna Assets 0
+itob
+concat
+app_global_get
+itob
+concat
+app_global_get
+itob
+concat
+app_local_get
+txna ApplicationArgs 1
+btoi
+-
+app_local_put
+byte "AssetId:"
+txna Assets 0
+itob
+concat
+app_global_get
+int 32
+>
+byte "AssetId:"
+txna Assets 0
+itob
+concat
+app_global_get
+int 255
+<
+&&
+int 1
+==
+bnz main_l33
+txna ApplicationArgs 1
+btoi
+store 6
+main_l32:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Assets 0
+itxn_field XferAsset
+txn Sender
+itxn_field AssetReceiver
+load 6
+itxn_field AssetAmount
+itxn_submit
+int 1
+return
+main_l33:
+txna ApplicationArgs 1
+btoi
+int 1000000000000
+*
+store 6
+b main_l32
+main_l34:
+txna ApplicationArgs 1
+btoi
+int 0
+>
+assert
+byte "AssetId:"
+txna Assets 0
+itob
+concat
+app_global_get
+int 32
+>
+byte "AssetId:"
+txna Assets 0
+itob
+concat
+app_global_get
+int 255
+<
+&&
+int 1
+==
+bnz main_l37
+txna ApplicationArgs 1
+btoi
+store 5
+main_l36:
+int 1
+gtxns TypeEnum
+int axfer
+==
+int 1
+gtxns Sender
+txn Sender
+==
+&&
+int 1
+gtxns AssetReceiver
+global CurrentApplicationAddress
+==
+&&
+int 1
+gtxns XferAsset
+txna Assets 0
+==
+&&
+int 1
+gtxns AssetAmount
+txna ApplicationArgs 1
+btoi
+==
+&&
+assert
+txn Sender
+byte "MesonLP:"
+txna Assets 0
+itob
+concat
+txn Sender
+byte "MesonLP:"
+byte "TokenIndex:"
+byte "AssetId:"
+txna Assets 0
+itob
+concat
+app_global_get
+itob
+concat
+app_global_get
+itob
+concat
+app_local_get
+txna ApplicationArgs 1
+btoi
++
+app_local_put
+int 1
+return
+main_l37:
+txna ApplicationArgs 1
+btoi
+int 1000000000000
+*
+store 5
+b main_l36
+main_l38:
+txna ApplicationArgs 1
+btoi
+int 0
+>
+assert
+byte "AssetId:"
+txna Assets 0
+itob
+concat
+app_global_get
+int 32
+>
+byte "AssetId:"
+txna Assets 0
+itob
+concat
+app_global_get
+int 255
+<
+&&
+int 1
+==
+bnz main_l41
+txna ApplicationArgs 1
+btoi
+store 4
+main_l40:
+int 1
+gtxns TypeEnum
+int axfer
+==
+int 1
+gtxns Sender
+txn Sender
+==
+&&
+int 1
+gtxns AssetReceiver
+global CurrentApplicationAddress
+==
+&&
+int 1
+gtxns XferAsset
+txna Assets 0
+==
+&&
+int 1
+gtxns AssetAmount
+txna ApplicationArgs 1
+btoi
+==
+&&
+txn Sender
+byte "MesonLP:"
+byte "TokenIndex:"
+byte "AssetId:"
+txna Assets 0
+itob
+concat
+app_global_get
+itob
+concat
+app_global_get
+itob
+concat
+app_local_get
+int 0
+==
+&&
+assert
+txn Sender
+byte "MesonLP:"
+txna Assets 0
+itob
+concat
+txna ApplicationArgs 1
+btoi
+app_local_put
+int 1
+return
+main_l41:
+txna ApplicationArgs 1
+btoi
+int 1000000000000
+*
+store 4
+b main_l40
+main_l42:
+txna ApplicationArgs 1
+txna Accounts 1
+concat
+keccak256
+box_get
+store 2
+store 1
+load 2
+assert
+load 1
+byte 0x1111111111111111111111111111111111111111111111111111111111111111111111111111
+!=
+txna Accounts 2
+byte 0x0000000000000000000000000000000000000000000000000000000000000000
+!=
+&&
+txna ApplicationArgs 1
+extract 21 5
+btoi
+txn FirstValidTime
+>
+&&
+int 1
+&&
+assert
+txna ApplicationArgs 1
+txna Accounts 1
+concat
+keccak256
+byte 0x1111111111111111111111111111111111111111111111111111111111111111111111111111
+box_put
+txna ApplicationArgs 1
+extract 1 5
+btoi
+txna ApplicationArgs 1
+extract 16 5
+btoi
+-
+store 0
+txna ApplicationArgs 1
+extract 6 1
+btoi
+int 64
+&
+int 0
+>
+!
+bnz main_l47
+main_l43:
+txna ApplicationArgs 1
+extract 28 1
+btoi
+int 32
+>
+txna ApplicationArgs 1
+extract 28 1
+btoi
+int 255
+<
+&&
+int 1
+==
+bnz main_l46
+load 0
+store 3
+main_l45:
+itxn_begin
+int axfer
+itxn_field TypeEnum
+byte "TokenIndex:"
+txna ApplicationArgs 1
+extract 28 1
+btoi
+itob
+concat
+app_global_get
+itxn_field XferAsset
+txna Accounts 2
+itxn_field AssetReceiver
+load 3
+itxn_field AssetAmount
+itxn_submit
+int 1
+return
+main_l46:
+load 0
+int 1000000000000
+*
+store 3
+b main_l45
+main_l47:
+load 0
+txna ApplicationArgs 1
+extract 1 5
+btoi
+int 10
+*
+int 10000
+/
+-
+store 0
+byte "ProtocolFee:"
+byte "TokenIndex:"
+txna ApplicationArgs 1
+extract 28 1
+btoi
+itob
+concat
+app_global_get
+itob
+concat
+byte "ProtocolFee:"
+byte "TokenIndex:"
+txna ApplicationArgs 1
+extract 28 1
+btoi
+itob
+concat
+app_global_get
+itob
+concat
+app_global_get
+txna ApplicationArgs 1
+extract 1 5
+btoi
+int 10
+*
+int 10000
+/
++
+app_global_put
+b main_l43
+main_l48:
+txna ApplicationArgs 1
+extract 26 2
+btoi
+int 283
+==
+txna ApplicationArgs 1
+extract 0 1
+btoi
+int 1
+==
+&&
+txn FirstValidTime
+int 1200
++
+txna ApplicationArgs 1
+extract 21 5
+btoi
+int 300
+-
+<
+&&
+int 1
+&&
+txn Sender
+byte "MesonLP:"
+byte "TokenIndex:"
+txna ApplicationArgs 1
+extract 28 1
+btoi
+itob
+concat
+app_global_get
+itob
+concat
+app_local_get
+txna ApplicationArgs 1
+extract 1 5
+btoi
+txna ApplicationArgs 1
+extract 16 5
+btoi
+-
+>
+&&
+assert
+txn Sender
+byte "MesonLP:"
+byte "TokenIndex:"
+txna ApplicationArgs 1
+extract 28 1
+btoi
+itob
+concat
+app_global_get
+itob
+concat
+txn Sender
+byte "MesonLP:"
+byte "TokenIndex:"
+txna ApplicationArgs 1
+extract 28 1
+btoi
+itob
+concat
+app_global_get
+itob
+concat
+app_local_get
+txna ApplicationArgs 1
+extract 1 5
+btoi
+txna ApplicationArgs 1
+extract 16 5
+btoi
+-
+-
+app_local_put
+txna ApplicationArgs 1
+txna Accounts 1
+concat
+keccak256
+int 38
+box_create
+assert
+txna ApplicationArgs 1
+txna Accounts 1
+concat
+keccak256
+txn FirstValidTime
+int 1200
++
+itob
+extract 3 5
+txn Sender
+concat
+txna ApplicationArgs 1
+extract 28 1
+btoi
+itob
+extract 7 1
+concat
+box_put
+int 1
+return
+main_l49:
+txna ApplicationArgs 1
+btoi
+int 256
+<
+assert
+txna ApplicationArgs 1
+btoi
+int 0
+!=
+assert
+txna Assets 0
+int 0
+!=
+assert
+byte "TokenIndex:"
+txna ApplicationArgs 1
+btoi
+itob
+concat
+app_global_get
+int 0
+==
+assert
+byte "AssetId:"
+txna Assets 0
+itob
+concat
+app_global_get
+int 0
+==
+assert
+byte "TokenIndex:"
+txna ApplicationArgs 1
+btoi
+itob
+concat
+txna Assets 0
+app_global_put
+byte "AssetId:"
+txna Assets 0
+itob
+concat
+txna ApplicationArgs 1
+btoi
+app_global_put
+byte "ProtocolFee:"
+txna Assets 0
+itob
+concat
+int 0
+app_global_put
+itxn_begin
+int axfer
+itxn_field TypeEnum
+txna Assets 0
+itxn_field XferAsset
+global CurrentApplicationAddress
+itxn_field AssetReceiver
+int 0
+itxn_field AssetAmount
+itxn_submit
+int 1
+return
+main_l50:
+int 0
+return
+main_l51:
+int 1
+return
+main_l52:
+int 1
+return
