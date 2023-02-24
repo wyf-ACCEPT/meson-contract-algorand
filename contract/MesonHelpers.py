@@ -212,10 +212,37 @@ def getSwapId(
 
 
 # ---------------------------------- signature ----------------------------------
+def isEthAddr(addrEth: Bytes) -> TealType.none:
+    return Assert(Len(addrEth) == Int(20))
+
+
+def ethAddrFromAlgorandAddr(addrAlgo: Bytes) -> Bytes:
+    return Substring(addrAlgo, Int(0), Int(20))
+
+
+def ethAddrFromPubkey(pk: Bytes) -> Bytes:
+    return Seq(
+        Assert(Len(pk) == Int(64)),
+        Substring(Keccak256(pk), Int(12), Int(32))
+    )
+
+
+def recoverEthAddr(
+    digest: Bytes,
+    r: Bytes,
+    s: Bytes,
+    v: Int,
+) -> Bytes:
+    pkMultiValue = EcdsaRecover(EcdsaCurve.Secp256k1, digest, v, r, s)
+    pk = pkMultiValue.outputReducer(lambda X, Y: Concat(X, Y))  # Concat the return MultiValue
+    return ethAddrFromPubkey(pk)
+    
+
 def checkRequestSignature(
     encodedSwap: Bytes,
     r: Bytes,
-    s_v: Bytes,
+    s: Bytes,
+    v: Int,
     signer: Bytes,
 ) -> Int:
     # todo
@@ -226,7 +253,8 @@ def checkReleaseSignature(
     encodedSwap: Bytes,
     recipient: Bytes,
     r: Bytes,
-    s_v: Bytes,
+    s: Bytes,
+    v: Int,
     signer: Bytes,
 ) -> Int:
     # todo

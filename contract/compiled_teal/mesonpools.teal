@@ -309,7 +309,7 @@ store 5
 b main_l22
 main_l24:
 txna ApplicationArgs 1
-txna ApplicationArgs 4
+txna ApplicationArgs 5
 concat
 keccak256
 box_get
@@ -325,7 +325,7 @@ load 2
 extract 37 32
 store 1
 txna ApplicationArgs 1
-txna ApplicationArgs 4
+txna ApplicationArgs 5
 concat
 keccak256
 byte 0x111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
@@ -522,14 +522,14 @@ btoi
 -
 app_local_put
 txna ApplicationArgs 1
-txna ApplicationArgs 4
+txna ApplicationArgs 5
 concat
 keccak256
 int 69
 box_create
 assert
 txna ApplicationArgs 1
-txna ApplicationArgs 4
+txna ApplicationArgs 5
 concat
 keccak256
 txn Sender

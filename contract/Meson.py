@@ -39,25 +39,6 @@ def mesonMainFunc():
                     ),
                 ],
                 [
-                    Txn.application_args[0] == Bytes("lock"),
-                    lock(
-                        Txn.application_args[1],
-                        Btoi(Txn.application_args[2]),
-                        Btoi(Txn.application_args[3]),
-                        Txn.application_args[4],
-                        Txn.accounts[1],
-                    ),
-                ],
-                [
-                    Txn.application_args[0] == Bytes("release"),
-                    release(
-                        Txn.application_args[1],
-                        Btoi(Txn.application_args[2]),
-                        Btoi(Txn.application_args[3]),
-                        Txn.application_args[4],
-                    ),
-                ],
-                [
                     Txn.application_args[0] == Bytes("depositAndRegister"),
                     depositAndRegister(
                         Btoi(Txn.application_args[1]),
@@ -84,12 +65,34 @@ def mesonMainFunc():
                         Txn.application_args[1],
                         Txn.application_args[2],
                         Txn.application_args[3],
-                        Txn.application_args[4],
+                        Btoi(Txn.application_args[4]),
+                        Txn.application_args[5],
                     ),
                 ],
                 [
                     Txn.application_args[0] == Bytes("bondSwap"),
                     bondSwap(Txn.application_args[1]),
+                ],
+                [
+                    Txn.application_args[0] == Bytes("lock"),
+                    lock(
+                        Txn.application_args[1],
+                        Txn.application_args[2],
+                        Txn.application_args[3],
+                        Btoi(Txn.application_args[4]),
+                        Txn.application_args[5],
+                        Txn.accounts[1],
+                    ),
+                ],
+                [
+                    Txn.application_args[0] == Bytes("release"),
+                    release(
+                        Txn.application_args[1],
+                        Txn.application_args[2],
+                        Txn.application_args[3],
+                        Btoi(Txn.application_args[4]),
+                        Txn.application_args[5],
+                    ),
                 ],
                 [
                     Txn.application_args[0] == Bytes("executeSwap"),
@@ -98,6 +101,7 @@ def mesonMainFunc():
                         Txn.application_args[2],
                         Txn.application_args[3],
                         Btoi(Txn.application_args[4]),
+                        Btoi(Txn.application_args[5]),
                         Txn.accounts[1],
                     ),
                 ],

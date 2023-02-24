@@ -63,7 +63,8 @@ def withdraw(
 def lock(
     encodedSwap: Bytes,
     r: Bytes,
-    s_v: Bytes,
+    s: Bytes,
+    v: Int,
     initiator: Bytes,  # This is an etheruem address
     recipient: Bytes,  # This variable is bring from Txn.accounts
 ) -> Int:
@@ -82,7 +83,7 @@ def lock(
         outChain == cp.SHORT_COIN_TYPE,
         version == cp.MESON_PROTOCOL_VERSION,
         until < expireTs - Int(300),  # 5 minutes     # todo: check if it's 300 or 300,000
-        checkRequestSignature(encodedSwap, r, s_v, initiator),
+        checkRequestSignature(encodedSwap, r, s, v, initiator),
         poolTokenBalance(lp, tokenIndexOut) > lockAmount,
     )
 
@@ -99,7 +100,8 @@ def lock(
 def release(
     encodedSwap: Bytes,
     r: Bytes,
-    s_v: Bytes,
+    s: Bytes,
+    v: Int,
     initiator: Bytes,  # This is an etheruem address
 ) -> Int:
     # todo: Txn.sender() == <tx.origin>?
@@ -116,7 +118,7 @@ def release(
     conditions = And(
         recipient.load() != cp.ZERO_ADDRESS,
         expireTs > Txn.first_valid_time(),
-        checkReleaseSignature(encodedSwap, recipient.load(), r, s_v, initiator),
+        checkReleaseSignature(encodedSwap, recipient.load(), r, s, v, initiator),
     )
 
     return Seq(
@@ -182,7 +184,8 @@ def mesonPoolsMainFunc():
                         Txn.application_args[1],
                         Txn.application_args[2],
                         Txn.application_args[3],
-                        Txn.application_args[4],
+                        Btoi(Txn.application_args[4]),
+                        Txn.application_args[5],
                         Txn.accounts[1],
                     ),
                 ],
@@ -192,7 +195,8 @@ def mesonPoolsMainFunc():
                         Txn.application_args[1],
                         Txn.application_args[2],
                         Txn.application_args[3],
-                        Txn.application_args[4],
+                        Btoi(Txn.application_args[4]),
+                        Txn.application_args[5],
                     ),
                 ],
                 [
