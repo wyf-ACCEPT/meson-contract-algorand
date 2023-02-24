@@ -212,8 +212,8 @@ def getSwapId(
 
 
 # ---------------------------------- signature ----------------------------------
-def isEthAddr(addrEth: Bytes) -> TealType.none:
-    return Assert(Len(addrEth) == Int(20))
+def isEthAddr(addrEth: Bytes) -> Int:
+    return Len(addrEth) == Int(20)
 
 
 def ethAddrFromAlgorandAddr(addrAlgo: Bytes) -> Bytes:
@@ -245,8 +245,15 @@ def checkRequestSignature(
     v: Int,
     signer: Bytes,
 ) -> Int:
-    # todo
-    return Int(1)
+    messageHash = Keccak256(encodedSwap)
+    typeHash = Keccak256(cp.REQUEST_TYPE)   # TODO: Add more if-else branches (TRON, signNonTyped)
+    digest = Keccak256(Concat(typeHash, messageHash))
+    recovered = recoverEthAddr(digest, r, s, v)
+    
+    return And(
+        isEthAddr(signer),
+        recovered == signer,
+    )
 
 
 def checkReleaseSignature(
@@ -257,5 +264,12 @@ def checkReleaseSignature(
     v: Int,
     signer: Bytes,
 ) -> Int:
-    # todo
-    return Int(1)
+    messageRecipientHash = Keccak256(Concat(encodedSwap, recipient))
+    typeHash = Keccak256(cp.RELEASE_TYPE)   # TODO: Add more if-else branches (TRON, signNonTyped)
+    digest = Keccak256(Concat(typeHash, messageRecipientHash))
+    recovered = recoverEthAddr(digest, r, s, v)
+    
+    return And(
+        isEthAddr(signer),
+        recovered == signer,
+    )

@@ -25,6 +25,10 @@ class ConfigParams:
     # TRON_SIGN_HEADER_33 = Bytes("\x19TRON Signed Message:\n33\n");
     # TRON_SIGN_HEADER_53 = Bytes("\x19TRON Signed Message:\n53\n");
 
+    # TODO: Change these to hashed values.
+    REQUEST_TYPE = Bytes("bytes32 Sign to request a swap on Meson (Testnet)")
+    RELEASE_TYPE = Bytes("bytes32 Sign to release a swap on Meson (Testnet)address Recipient")
+    
     # # REQUEST_TYPE_HASH = keccak256("bytes32 Sign to request a swap on Meson (Testnet)");
     # # RELEASE_TYPE_HASH = keccak256("bytes32 Sign to release a swap on Meson (Testnet)address Recipient");
 
