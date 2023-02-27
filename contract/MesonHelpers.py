@@ -29,7 +29,7 @@ def safeTransfer(
     )
 
 
-# transferToContract: todo
+# transferToContract: TODO
 # unsafeDepositToken: discard
 
 

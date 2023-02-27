@@ -28,7 +28,7 @@ def depositAndRegister(
     )
 
 
-# todo: this function (maybe) can merge with the above one
+# TODO: this function (maybe) can merge with the above one
 def deposit(
     amount: Int,
     assetId: Int,
@@ -82,7 +82,7 @@ def lock(
     conditions = And(
         outChain == cp.SHORT_COIN_TYPE,
         version == cp.MESON_PROTOCOL_VERSION,
-        until < expireTs - Int(300),  # 5 minutes     # todo: check if it's 300 or 300,000
+        until < expireTs - Int(300),  # 5 minutes     # TODO: check if it's 300 or 300,000
         checkRequestSignature(encodedSwap, r, s, v, initiator),
         poolTokenBalance(lp, tokenIndexOut) > lockAmount,
     )
@@ -104,8 +104,8 @@ def release(
     v: Int,
     initiator: Bytes,  # This is an etheruem address
 ) -> Int:
-    # todo: Txn.sender() == <tx.origin>?
-    # todo: _onlyPremiumManager
+    # TODO: Txn.sender() == <tx.origin>?
+    # TODO: _onlyPremiumManager
     feeWaived = extraItemFrom("_feeWaived", encodedSwap)
     expireTs = decodeSwap("expireTs", encodedSwap)
     swapId = getSwapId(encodedSwap, initiator)
@@ -143,7 +143,7 @@ def release(
                     + serviceFee,
                 ),
             ),
-        ),  # todo: transferToContract
+        ),  # TODO: transferToContract
         safeTransfer(assetIdOut, recipient.load(), releaseAmount.load(), tokenIndexOut),
         Approve(),
     )
@@ -164,7 +164,7 @@ def mesonPoolsMainFunc():
             Or(
                 Txn.on_completion() == OnComplete.CloseOut,
                 Txn.on_completion() == OnComplete.UpdateApplication,
-                Txn.on_completion() == OnComplete.DeleteApplication,  # todo
+                Txn.on_completion() == OnComplete.DeleteApplication,  # TODO
             ),
             Reject(),
         ],
@@ -219,6 +219,18 @@ def mesonPoolsMainFunc():
                         Btoi(Txn.application_args[1]),
                         Txn.assets[0],
                     ),
+                ],
+                [
+                    Txn.application_args[0] == Bytes("paddingForEcdsa1"),
+                    Approve()
+                ],
+                [
+                    Txn.application_args[0] == Bytes("paddingForEcdsa2"),
+                    Approve()
+                ],
+                [
+                    Txn.application_args[0] == Bytes("paddingForEcdsa3"),
+                    Approve()
                 ],
             ),
         ],

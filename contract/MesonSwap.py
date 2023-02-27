@@ -21,7 +21,7 @@ def postSwap(
     version = decodeSwap("version", encodedSwap)
     amount = decodeSwap("amount", encodedSwap)
     delta = decodeSwap("expireTs", encodedSwap) - Txn.first_valid_time()
-    from_address = Txn.sender()  # todo
+    from_address = Txn.sender()  # TODO
     lp_not_bonded = cp.ZERO_ADDRESS
     tokenIndexIn = decodeSwap("inToken", encodedSwap)
     assetIdIn = getAssetId(tokenIndexIn)
@@ -117,7 +117,7 @@ def mesonSwapMainFunc():
             Or(
                 Txn.on_completion() == OnComplete.CloseOut,
                 Txn.on_completion() == OnComplete.UpdateApplication,
-                Txn.on_completion() == OnComplete.DeleteApplication,  # todo
+                Txn.on_completion() == OnComplete.DeleteApplication,  # TODO
             ),
             Reject(),
         ],
@@ -155,6 +155,18 @@ def mesonSwapMainFunc():
                         Btoi(Txn.application_args[5]),
                         Txn.accounts[1],
                     ),
+                ],
+                [
+                    Txn.application_args[0] == Bytes("paddingForEcdsa1"),
+                    Approve()
+                ],
+                [
+                    Txn.application_args[0] == Bytes("paddingForEcdsa2"),
+                    Approve()
+                ],
+                [
+                    Txn.application_args[0] == Bytes("paddingForEcdsa3"),
+                    Approve()
                 ],
             ),
         ],
