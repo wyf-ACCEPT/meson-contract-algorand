@@ -1,0 +1,137 @@
+#pragma version 8
+txn ApplicationID
+int 0
+==
+bnz main_l14
+txn OnCompletion
+int OptIn
+==
+bnz main_l13
+txn OnCompletion
+int CloseOut
+==
+txn OnCompletion
+int UpdateApplication
+==
+||
+txn OnCompletion
+int DeleteApplication
+==
+||
+bnz main_l12
+txn OnCompletion
+int NoOp
+==
+bnz main_l5
+err
+main_l5:
+txna ApplicationArgs 0
+byte "checkRequest"
+==
+bnz main_l11
+txna ApplicationArgs 0
+byte "checkRelease"
+==
+bnz main_l10
+int 1
+bnz main_l9
+err
+main_l9:
+int 1
+return
+main_l10:
+txna ApplicationArgs 6
+len
+int 20
+==
+byte 0xd23291d9d999318ac3ed13f43ac8003d6fbd69a4b532aeec9ffad516010a208c
+txna ApplicationArgs 1
+txna ApplicationArgs 2
+concat
+keccak256
+concat
+keccak256
+txna ApplicationArgs 5
+btoi
+txna ApplicationArgs 3
+txna ApplicationArgs 4
+ecdsa_pk_recover Secp256k1
+store 3
+store 2
+load 2
+load 3
+concat
+len
+int 64
+==
+assert
+byte 0xd23291d9d999318ac3ed13f43ac8003d6fbd69a4b532aeec9ffad516010a208c
+txna ApplicationArgs 1
+txna ApplicationArgs 2
+concat
+keccak256
+concat
+keccak256
+txna ApplicationArgs 5
+btoi
+txna ApplicationArgs 3
+txna ApplicationArgs 4
+ecdsa_pk_recover Secp256k1
+store 3
+store 2
+load 2
+load 3
+concat
+keccak256
+extract 12 20
+txna ApplicationArgs 6
+==
+&&
+assert
+int 1
+return
+main_l11:
+byte "encodedHash"
+txna ApplicationArgs 1
+keccak256
+app_global_put
+byte "typeHash"
+byte 0x7b521e60f64ab56ff03ddfb26df49be54b20672b7acfffc1adeb256b554ccb25
+app_global_put
+byte "digest"
+byte 0x7b521e60f64ab56ff03ddfb26df49be54b20672b7acfffc1adeb256b554ccb25
+txna ApplicationArgs 1
+keccak256
+concat
+keccak256
+app_global_put
+byte "pk"
+byte 0x7b521e60f64ab56ff03ddfb26df49be54b20672b7acfffc1adeb256b554ccb25
+txna ApplicationArgs 1
+keccak256
+concat
+keccak256
+txna ApplicationArgs 4
+btoi
+txna ApplicationArgs 2
+txna ApplicationArgs 3
+ecdsa_pk_recover Secp256k1
+store 1
+store 0
+load 0
+load 1
+concat
+app_global_put
+int 1
+assert
+int 1
+return
+main_l12:
+int 0
+return
+main_l13:
+int 1
+return
+main_l14:
+int 1
+return

@@ -117,6 +117,18 @@ def mesonMainFunc():
                     Txn.application_args[0] == Bytes("paddingForEcdsa3"),
                     Approve()
                 ],
+                [
+                    Txn.application_args[0] == Bytes("paddingForEcdsa4"),
+                    Approve()
+                ],
+                [
+                    Txn.application_args[0] == Bytes("paddingForEcdsa5"),
+                    Approve()
+                ],
+                [
+                    Txn.application_args[0] == Bytes("paddingForEcdsa6"),
+                    Approve()
+                ],
             ),
         ],
     )

@@ -35,11 +35,11 @@ def optInApp(appIndex: Int):
 
 # Directly using global index to map:
 def addSupportToken(assetId: Int, tokenIndex: Int) -> Int:
-    # TODO: onlyDeployer
 
     #   Bytes('AssetId:\x00\x00\x00\x00\x01\x06\x8f_') -> Int(1)
     #   Bytes('TokenIndex:\x00\x00\x00\x00\x00\x00\x00\x01') -> Int(0x1068f5f)
     return Seq(
+        Assert(Txn.sender() == Global.creator_address()),
         Assert(tokenIndex < Int(256)),
         Assert(tokenIndex != Int(0)),   # It represents the token index of Meson Contract.
         Assert(assetId != Int(0)),      # It represents the token index on Algorand blockchain.

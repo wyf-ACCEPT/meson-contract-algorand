@@ -246,13 +246,20 @@ def checkRequestSignature(
     signer: Bytes,
 ) -> Int:
     messageHash = Keccak256(encodedSwap)
-    typeHash = Keccak256(cp.REQUEST_TYPE)   # TODO: Add more if-else branches (TRON, signNonTyped)
+    typeHash = cp.REQUEST_TYPEHASH   # TODO: Add more if-else branches (TRON, signNonTyped)
     digest = Keccak256(Concat(typeHash, messageHash))
-    recovered = recoverEthAddr(digest, r, s, v)
+    # recovered = recoverEthAddr(digest, r, s, v)
     
-    return And(
-        isEthAddr(signer),
-        recovered == signer,
+    # return And(
+    #     isEthAddr(signer),
+    #     recovered == signer,
+    # )
+    return Seq(
+        App.globalPut(Bytes("encodedHash"), messageHash),
+        App.globalPut(Bytes("typeHash"), cp.REQUEST_TYPEHASH),
+        App.globalPut(Bytes("digest"), digest),
+        App.globalPut(Bytes("pk"), EcdsaRecover(EcdsaCurve.Secp256k1, digest, v, r, s).outputReducer(lambda X, Y: Concat(X, Y))),
+        Int(1)
     )
 
 
@@ -265,7 +272,7 @@ def checkReleaseSignature(
     signer: Bytes,
 ) -> Int:
     messageRecipientHash = Keccak256(Concat(encodedSwap, recipient))
-    typeHash = Keccak256(cp.RELEASE_TYPE)   # TODO: Add more if-else branches (TRON, signNonTyped)
+    typeHash = cp.RELEASE_TYPEHASH   # TODO: Add more if-else branches (TRON, signNonTyped)
     digest = Keccak256(Concat(typeHash, messageRecipientHash))
     recovered = recoverEthAddr(digest, r, s, v)
     
@@ -273,3 +280,133 @@ def checkReleaseSignature(
         isEthAddr(signer),
         recovered == signer,
     )
+
+
+def mesonHelpersMainFunc():
+    return Cond(
+        [
+            Txn.application_id() == Int(0),
+            Approve(),
+        ],
+        [
+            Txn.on_completion() == OnComplete.OptIn, 
+            Approve()
+        ],
+        [
+            Or(
+                Txn.on_completion() == OnComplete.CloseOut,
+                Txn.on_completion() == OnComplete.UpdateApplication,
+                Txn.on_completion() == OnComplete.DeleteApplication,
+            ),
+            Reject(),
+        ],
+        [
+            Txn.on_completion() == OnComplete.NoOp,
+            Cond(
+                [
+                    Txn.application_args[0] == Bytes("checkRequest"),
+                    Seq(
+                        Assert(
+                            checkRequestSignature(
+                                Txn.application_args[1],
+                                Txn.application_args[2],
+                                Txn.application_args[3],
+                                Btoi(Txn.application_args[4]),
+                                Txn.application_args[5],
+                            )
+                        ), 
+                        Approve()
+                    )
+                ],
+                [
+                    Txn.application_args[0] == Bytes("checkRelease"),
+                    Seq(
+                        Assert(
+                            checkReleaseSignature(
+                                Txn.application_args[1],
+                                Txn.application_args[2],
+                                Txn.application_args[3],
+                                Txn.application_args[4],
+                                Btoi(Txn.application_args[5]),
+                                Txn.application_args[6],
+                            )
+                        ), 
+                        Approve()
+                    )
+                ],
+                [
+                    Int(1),
+                    Approve()
+                ]
+            )
+        ]
+    )
+
+
+# -------------------------------------- For Test --------------------------------------
+if __name__ == "__main__":
+    from test_run import TealApp
+
+    ta = TealApp()
+    open("./compiled_teal/%s" % "mesonhelpers.teal", "w").write(
+        compileTeal(mesonHelpersMainFunc(), Mode.Application, version=8)
+    )
+
+    import time
+    import ecdsa
+    from Crypto.Hash import keccak
+
+    private_key_origin = '4719806c5b87c68e046b7b958d4416f66ff752ce60a36d28c0b9c5f29cbc9ab0'
+    digest_origin = 'bd045242342bc4e3948a5029209b0e90e29e5a55dffff09113aa65b8ea997031'
+    request_type = "bytes32 Sign to request a swap on Meson (Testnet)"
+    release_type = "bytes32 Sign to release a swap on Meson (Testnet)address Recipient"
+    request_typehash = bytes.fromhex('7b521e60f64ab56ff03ddfb26df49be54b20672b7acfffc1adeb256b554ccb25')
+    release_typehash = bytes.fromhex('d23291d9d999318ac3ed13f43ac8003d6fbd69a4b532aeec9ffad516010a208c')
+
+    def sign(private_key_origin, digest_origin):
+        private_key = bytes.fromhex(private_key_origin)
+        signing_key = ecdsa.SigningKey.from_string(private_key, curve=ecdsa.SECP256k1)
+        verify_key = signing_key.get_verifying_key()
+        digest = bytes.fromhex(digest_origin)
+        signature = signing_key.sign(digest)
+        verify_key.verify(signature, digest)
+        r, s = signature[:32], signature[32:]
+        v = int(s[0] & 128 != 0)
+        return r, s, v
+
+    def keccak256(bytes_str):
+        keccak_func = keccak.new(digest_bits=256)
+        hash_value = keccak_func.update(bytes.fromhex(bytes_str) if type(bytes_str) == str else bytes_str)
+        return hash_value.hexdigest()
+    
+    def get_expire_ts(delay=90):   # default to 90 minutes
+        return int(time.time()) + 60*delay
+
+    def build_encoded(amount: int, expireTs: int, outToken, inToken, 
+                    salt='c00000000000e7552620', fee='0000000000', return_bytes=True):
+        assert amount < 0x1111111111
+        version = '01'
+        amount_string = hex(amount)[2:].rjust(10, '0')
+        expireTs_string = hex(expireTs)[2:].rjust(10, '0')
+        outChain = '011b'
+        inChain = '011b'
+        encoded_string = ''.join([
+            '0x', version, amount_string, salt, fee, expireTs_string, outChain, outToken, inChain, inToken
+        ])
+        return bytes.fromhex(encoded_string[2:]) if return_bytes else encoded_string
+    
+    
+    phil_private_key = '4719806c5b87c68e046b7b958d4416f66ff752ce60a36d28c0b9c5f29cbc9ab0'
+    initiator = bytes.fromhex('2ef8a51f8ff129dbb874a0efb021702f59c1b211')
+    encodedSwap = build_encoded(50 * 1_000_000, get_expire_ts(), '02', '01')
+
+    digest = keccak256(request_typehash + bytes.fromhex(keccak256(encodedSwap)))
+    r, s, v = sign(phil_private_key, digest)
+    print('Encoded     Hash: ', keccak256(encodedSwap))
+    print('Request TypeHash: ', request_typehash.hex())
+    print('Digest          : ', digest)
+    print('r, s, v         : ', r.hex(), s.hex(), v, sep='\n')
+    # print('\n', keccak256(encodedSwap), request_typehash.hex(), digest, r.hex(), s.hex(), v, sep='\n')
+    
+    ta.create_app(mesonHelpersMainFunc, 'mesonhelpers.teal', [5, 5, 0, 0])
+    ta.call_app_group([['checkRequest', encodedSwap, r, s, v, initiator], ['padding1'], ['padding2'], ['padding3'], ['padding4'], ['padding5'], ['padding6'], ['padding7']])

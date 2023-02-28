@@ -2,11 +2,11 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l58
+bnz main_l60
 txn OnCompletion
 int OptIn
 ==
-bnz main_l57
+bnz main_l59
 txn OnCompletion
 int CloseOut
 ==
@@ -18,7 +18,7 @@ txn OnCompletion
 int DeleteApplication
 ==
 ||
-bnz main_l56
+bnz main_l58
 txn OnCompletion
 int NoOp
 ==
@@ -28,55 +28,56 @@ main_l5:
 txna ApplicationArgs 0
 byte "addSupportToken"
 ==
-bnz main_l55
+bnz main_l57
 txna ApplicationArgs 0
 byte "depositAndRegister"
 ==
-bnz main_l51
+bnz main_l53
 txna ApplicationArgs 0
 byte "deposit"
 ==
-bnz main_l47
+bnz main_l49
 txna ApplicationArgs 0
 byte "withdraw"
 ==
-bnz main_l43
+bnz main_l45
 txna ApplicationArgs 0
 byte "postSwap"
 ==
-bnz main_l39
+bnz main_l41
 txna ApplicationArgs 0
 byte "bondSwap"
 ==
-bnz main_l38
+bnz main_l40
 txna ApplicationArgs 0
 byte "lock"
 ==
-bnz main_l37
+bnz main_l39
 txna ApplicationArgs 0
 byte "release"
 ==
-bnz main_l31
+bnz main_l33
 txna ApplicationArgs 0
 byte "executeSwap"
 ==
-bnz main_l21
+bnz main_l23
 txna ApplicationArgs 0
 byte "paddingForEcdsa1"
 ==
-bnz main_l20
+bnz main_l22
 txna ApplicationArgs 0
 byte "paddingForEcdsa2"
 ==
-bnz main_l19
+bnz main_l21
 txna ApplicationArgs 0
 byte "paddingForEcdsa3"
 ==
-bnz main_l18
+bnz main_l20
+txna ApplicationArgs 0
+byte "paddingForEcdsa4"
+==
+bnz main_l19
 err
-main_l18:
-int 1
-return
 main_l19:
 int 1
 return
@@ -84,6 +85,12 @@ main_l20:
 int 1
 return
 main_l21:
+int 1
+return
+main_l22:
+int 1
+return
+main_l23:
 txna ApplicationArgs 1
 box_get
 store 19
@@ -100,8 +107,7 @@ extract 32 20
 len
 int 20
 ==
-byte "bytes32 Sign to release a swap on Meson (Testnet)address Recipient"
-keccak256
+byte 0xd23291d9d999318ac3ed13f43ac8003d6fbd69a4b532aeec9ffad516010a208c
 txna ApplicationArgs 1
 txna Accounts 1
 concat
@@ -122,8 +128,7 @@ len
 int 64
 ==
 assert
-byte "bytes32 Sign to release a swap on Meson (Testnet)address Recipient"
-keccak256
+byte 0xd23291d9d999318ac3ed13f43ac8003d6fbd69a4b532aeec9ffad516010a208c
 txna ApplicationArgs 1
 txna Accounts 1
 concat
@@ -155,14 +160,14 @@ txn FirstValidTime
 int 3600
 +
 <
-bnz main_l30
+bnz main_l32
 txna ApplicationArgs 1
 byte 0x111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 box_put
-main_l23:
+main_l25:
 txna ApplicationArgs 5
 btoi
-bnz main_l29
+bnz main_l31
 txna ApplicationArgs 1
 extract 31 1
 btoi
@@ -176,12 +181,12 @@ int 255
 &&
 int 1
 ==
-bnz main_l28
+bnz main_l30
 txna ApplicationArgs 1
 extract 1 5
 btoi
 store 22
-main_l26:
+main_l28:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -199,18 +204,18 @@ itxn_field AssetReceiver
 load 22
 itxn_field AssetAmount
 itxn_submit
-main_l27:
+main_l29:
 int 1
 return
-main_l28:
+main_l30:
 txna ApplicationArgs 1
 extract 1 5
 btoi
 int 1000000000000
 *
 store 22
-b main_l26
-main_l29:
+b main_l28
+main_l31:
 load 17
 extract 0 32
 byte "MesonLP:"
@@ -241,13 +246,13 @@ extract 1 5
 btoi
 +
 app_local_put
-b main_l27
-main_l30:
+b main_l29
+main_l32:
 txna ApplicationArgs 1
 box_del
 assert
-b main_l23
-main_l31:
+b main_l25
+main_l33:
 txna ApplicationArgs 1
 txna ApplicationArgs 5
 concat
@@ -283,8 +288,7 @@ txna ApplicationArgs 5
 len
 int 20
 ==
-byte "bytes32 Sign to release a swap on Meson (Testnet)address Recipient"
-keccak256
+byte 0xd23291d9d999318ac3ed13f43ac8003d6fbd69a4b532aeec9ffad516010a208c
 txna ApplicationArgs 1
 load 11
 concat
@@ -305,8 +309,7 @@ len
 int 64
 ==
 assert
-byte "bytes32 Sign to release a swap on Meson (Testnet)address Recipient"
-keccak256
+byte 0xd23291d9d999318ac3ed13f43ac8003d6fbd69a4b532aeec9ffad516010a208c
 txna ApplicationArgs 1
 load 11
 concat
@@ -346,8 +349,8 @@ int 64
 int 0
 >
 !
-bnz main_l36
-main_l32:
+bnz main_l38
+main_l34:
 txna ApplicationArgs 1
 extract 28 1
 btoi
@@ -361,10 +364,10 @@ int 255
 &&
 int 1
 ==
-bnz main_l35
+bnz main_l37
 load 10
 store 16
-main_l34:
+main_l36:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -383,13 +386,13 @@ itxn_field AssetAmount
 itxn_submit
 int 1
 return
-main_l35:
+main_l37:
 load 10
 int 1000000000000
 *
 store 16
-b main_l34
-main_l36:
+b main_l36
+main_l38:
 load 10
 txna ApplicationArgs 1
 extract 1 5
@@ -430,8 +433,8 @@ int 10000
 /
 +
 app_global_put
-b main_l32
-main_l37:
+b main_l34
+main_l39:
 txna ApplicationArgs 1
 extract 26 2
 btoi
@@ -457,8 +460,7 @@ txna ApplicationArgs 5
 len
 int 20
 ==
-byte "bytes32 Sign to request a swap on Meson (Testnet)"
-keccak256
+byte 0x7b521e60f64ab56ff03ddfb26df49be54b20672b7acfffc1adeb256b554ccb25
 txna ApplicationArgs 1
 keccak256
 concat
@@ -477,8 +479,7 @@ len
 int 64
 ==
 assert
-byte "bytes32 Sign to request a swap on Meson (Testnet)"
-keccak256
+byte 0x7b521e60f64ab56ff03ddfb26df49be54b20672b7acfffc1adeb256b554ccb25
 txna ApplicationArgs 1
 keccak256
 concat
@@ -576,7 +577,7 @@ concat
 box_put
 int 1
 return
-main_l38:
+main_l40:
 txna ApplicationArgs 1
 box_get
 store 7
@@ -594,7 +595,7 @@ txn Sender
 box_replace
 int 1
 return
-main_l39:
+main_l41:
 txna ApplicationArgs 1
 extract 0 1
 btoi
@@ -632,8 +633,7 @@ txna ApplicationArgs 5
 len
 int 20
 ==
-byte "bytes32 Sign to request a swap on Meson (Testnet)"
-keccak256
+byte 0x7b521e60f64ab56ff03ddfb26df49be54b20672b7acfffc1adeb256b554ccb25
 txna ApplicationArgs 1
 keccak256
 concat
@@ -652,8 +652,7 @@ len
 int 64
 ==
 assert
-byte "bytes32 Sign to request a swap on Meson (Testnet)"
-keccak256
+byte 0x7b521e60f64ab56ff03ddfb26df49be54b20672b7acfffc1adeb256b554ccb25
 txna ApplicationArgs 1
 keccak256
 concat
@@ -693,12 +692,12 @@ int 255
 &&
 int 1
 ==
-bnz main_l42
+bnz main_l44
 txna ApplicationArgs 1
 extract 1 5
 btoi
 store 5
-main_l41:
+main_l43:
 int 1
 gtxns TypeEnum
 int axfer
@@ -746,15 +745,15 @@ concat
 box_put
 int 1
 return
-main_l42:
+main_l44:
 txna ApplicationArgs 1
 extract 1 5
 btoi
 int 1000000000000
 *
 store 5
-b main_l41
-main_l43:
+b main_l43
+main_l45:
 txn Sender
 byte "MesonLP:"
 byte "TokenIndex:"
@@ -813,11 +812,11 @@ int 255
 &&
 int 1
 ==
-bnz main_l46
+bnz main_l48
 txna ApplicationArgs 1
 btoi
 store 2
-main_l45:
+main_l47:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -830,14 +829,14 @@ itxn_field AssetAmount
 itxn_submit
 int 1
 return
-main_l46:
+main_l48:
 txna ApplicationArgs 1
 btoi
 int 1000000000000
 *
 store 2
-b main_l45
-main_l47:
+b main_l47
+main_l49:
 txna ApplicationArgs 1
 btoi
 int 0
@@ -860,11 +859,11 @@ int 255
 &&
 int 1
 ==
-bnz main_l50
+bnz main_l52
 txna ApplicationArgs 1
 btoi
 store 1
-main_l49:
+main_l51:
 int 1
 gtxns TypeEnum
 int axfer
@@ -916,14 +915,14 @@ btoi
 app_local_put
 int 1
 return
-main_l50:
+main_l52:
 txna ApplicationArgs 1
 btoi
 int 1000000000000
 *
 store 1
-b main_l49
-main_l51:
+b main_l51
+main_l53:
 txna ApplicationArgs 1
 btoi
 int 0
@@ -946,11 +945,11 @@ int 255
 &&
 int 1
 ==
-bnz main_l54
+bnz main_l56
 txna ApplicationArgs 1
 btoi
 store 0
-main_l53:
+main_l55:
 int 1
 gtxns TypeEnum
 int axfer
@@ -1004,14 +1003,14 @@ btoi
 app_local_put
 int 1
 return
-main_l54:
+main_l56:
 txna ApplicationArgs 1
 btoi
 int 1000000000000
 *
 store 0
-b main_l53
-main_l55:
+b main_l55
+main_l57:
 txna ApplicationArgs 1
 btoi
 int 256
@@ -1075,12 +1074,12 @@ itxn_field AssetAmount
 itxn_submit
 int 1
 return
-main_l56:
+main_l58:
 int 0
 return
-main_l57:
+main_l59:
 int 1
 return
-main_l58:
+main_l60:
 int 1
 return

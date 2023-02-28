@@ -1,4 +1,5 @@
 import base64
+from typing import List
 from pyteal import compileTeal, Mode, Return, Int
 from algosdk import account, mnemonic, logic
 from algosdk.v2client import algod
@@ -25,6 +26,21 @@ class TealApp:
         confirmed_txn = transaction.wait_for_confirmation(self.algod_client, txid, 3)
         print("Confirmed on round {}!".format(confirmed_txn['confirmed-round']))
         transaction_response = self.algod_client.pending_transaction_info(txid)
+        return transaction_response
+    
+    
+    def submit_transaction_group(self, private_key: str, unsigned_txns: List[transaction.Transaction]):
+        gid = transaction.calculate_group_id(unsigned_txns)
+        signed_txns = []
+        for unsigned in unsigned_txns:
+            unsigned.group = gid
+            signed = unsigned.sign(private_key)
+            signed_txns.append(signed)
+        gtxid = self.algod_client.send_transactions(signed_txns)
+        print("Signed transaction group with gtxID: {}".format(gtxid))
+        confirmed_txn = transaction.wait_for_confirmation(self.algod_client, gtxid, 3)
+        print("Confirmed on round {}!".format(confirmed_txn['confirmed-round']))
+        transaction_response = self.algod_client.pending_transaction_info(gtxid)
         return transaction_response
 
 
@@ -73,3 +89,18 @@ class TealApp:
                 **kargs
             )
         )
+    
+    
+    def call_app_group(self, app_args_list=[[]]):
+        self.submit_transaction_group(
+            self.alice_private_key,
+            [transaction.ApplicationCallTxn(
+                self.alice_address,
+                self.sp_func(),
+                self.application_index,
+                self.on_complete_param,
+                app_args=app_args
+            ) for app_args in app_args_list]
+        )
+    
+    

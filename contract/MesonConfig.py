@@ -27,7 +27,13 @@ class ConfigParams:
 
     # TODO: Change these to hashed values.
     REQUEST_TYPE = Bytes("bytes32 Sign to request a swap on Meson (Testnet)")
+    REQUEST_TYPEHASH = Bytes(
+        bytes.fromhex('7b521e60f64ab56ff03ddfb26df49be54b20672b7acfffc1adeb256b554ccb25')
+    )
     RELEASE_TYPE = Bytes("bytes32 Sign to release a swap on Meson (Testnet)address Recipient")
+    RELEASE_TYPEHASH = Bytes(
+        bytes.fromhex('d23291d9d999318ac3ed13f43ac8003d6fbd69a4b532aeec9ffad516010a208c ')
+    )
     
     # # REQUEST_TYPE_HASH = keccak256("bytes32 Sign to request a swap on Meson (Testnet)");
     # # RELEASE_TYPE_HASH = keccak256("bytes32 Sign to release a swap on Meson (Testnet)address Recipient");
