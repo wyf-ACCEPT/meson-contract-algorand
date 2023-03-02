@@ -248,18 +248,11 @@ def checkRequestSignature(
     messageHash = Keccak256(encodedSwap)
     typeHash = cp.REQUEST_TYPEHASH   # TODO: Add more if-else branches (TRON, signNonTyped)
     digest = Keccak256(Concat(typeHash, messageHash))
-    # recovered = recoverEthAddr(digest, r, s, v)
+    recovered = recoverEthAddr(digest, r, s, v)
     
-    # return And(
-    #     isEthAddr(signer),
-    #     recovered == signer,
-    # )
-    return Seq(
-        App.globalPut(Bytes("encodedHash"), messageHash),
-        App.globalPut(Bytes("typeHash"), cp.REQUEST_TYPEHASH),
-        App.globalPut(Bytes("digest"), digest),
-        App.globalPut(Bytes("pk"), EcdsaRecover(EcdsaCurve.Secp256k1, digest, v, r, s).outputReducer(lambda X, Y: Concat(X, Y))),
-        Int(1)
+    return And(
+        isEthAddr(signer),
+        recovered == signer,
     )
 
 
@@ -282,6 +275,8 @@ def checkReleaseSignature(
     )
 
 
+
+# -------------------------------------- For Test --------------------------------------
 def mesonHelpersMainFunc():
     return Cond(
         [
@@ -343,17 +338,16 @@ def mesonHelpersMainFunc():
     )
 
 
-# -------------------------------------- For Test --------------------------------------
 if __name__ == "__main__":
     from test_run import TealApp
 
     ta = TealApp()
-    open("./compiled_teal/%s" % "mesonhelpers.teal", "w").write(
+    open("./contract/compiled_teal/%s" % "mesonhelpers.teal", "w").write(
         compileTeal(mesonHelpersMainFunc(), Mode.Application, version=8)
     )
 
     import time
-    import ecdsa
+    from web3.auto import w3
     from Crypto.Hash import keccak
 
     private_key_origin = '4719806c5b87c68e046b7b958d4416f66ff752ce60a36d28c0b9c5f29cbc9ab0'
@@ -362,18 +356,7 @@ if __name__ == "__main__":
     release_type = "bytes32 Sign to release a swap on Meson (Testnet)address Recipient"
     request_typehash = bytes.fromhex('7b521e60f64ab56ff03ddfb26df49be54b20672b7acfffc1adeb256b554ccb25')
     release_typehash = bytes.fromhex('d23291d9d999318ac3ed13f43ac8003d6fbd69a4b532aeec9ffad516010a208c')
-
-    def sign(private_key_origin, digest_origin):
-        private_key = bytes.fromhex(private_key_origin)
-        signing_key = ecdsa.SigningKey.from_string(private_key, curve=ecdsa.SECP256k1)
-        verify_key = signing_key.get_verifying_key()
-        digest = bytes.fromhex(digest_origin)
-        signature = signing_key.sign(digest)
-        verify_key.verify(signature, digest)
-        r, s = signature[:32], signature[32:]
-        v = int(s[0] & 128 != 0)
-        return r, s, v
-
+    
     def keccak256(bytes_str):
         keccak_func = keccak.new(digest_bits=256)
         hash_value = keccak_func.update(bytes.fromhex(bytes_str) if type(bytes_str) == str else bytes_str)
@@ -400,11 +383,14 @@ if __name__ == "__main__":
     initiator = bytes.fromhex('2ef8a51f8ff129dbb874a0efb021702f59c1b211')
     encodedSwap = build_encoded(50 * 1_000_000, get_expire_ts(), '02', '01')
 
-    digest = keccak256(request_typehash + bytes.fromhex(keccak256(encodedSwap)))
-    r, s, v = sign(phil_private_key, digest)
+    digest_request = bytes.fromhex(keccak256(request_typehash + bytes.fromhex(keccak256(encodedSwap))))
+    signed_message = w3.eth.account._sign_hash(digest_request, phil_private_key)
+    r_int, s_int, v = signed_message.r, signed_message.s, signed_message.v - 27
+    r, s = int.to_bytes(r_int, 32, 'big'), int.to_bytes(s_int, 32, 'big')
+    
     print('Encoded     Hash: ', keccak256(encodedSwap))
     print('Request TypeHash: ', request_typehash.hex())
-    print('Digest          : ', digest)
+    print('Digest          : ', digest_request)
     print('r, s, v         : ', r.hex(), s.hex(), v, sep='\n')
     # print('\n', keccak256(encodedSwap), request_typehash.hex(), digest, r.hex(), s.hex(), v, sep='\n')
     

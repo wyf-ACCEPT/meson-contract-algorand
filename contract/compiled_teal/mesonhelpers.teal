@@ -91,21 +91,10 @@ assert
 int 1
 return
 main_l11:
-byte "encodedHash"
-txna ApplicationArgs 1
-keccak256
-app_global_put
-byte "typeHash"
-byte 0x7b521e60f64ab56ff03ddfb26df49be54b20672b7acfffc1adeb256b554ccb25
-app_global_put
-byte "digest"
-byte 0x7b521e60f64ab56ff03ddfb26df49be54b20672b7acfffc1adeb256b554ccb25
-txna ApplicationArgs 1
-keccak256
-concat
-keccak256
-app_global_put
-byte "pk"
+txna ApplicationArgs 5
+len
+int 20
+==
 byte 0x7b521e60f64ab56ff03ddfb26df49be54b20672b7acfffc1adeb256b554ccb25
 txna ApplicationArgs 1
 keccak256
@@ -121,8 +110,30 @@ store 0
 load 0
 load 1
 concat
-app_global_put
-int 1
+len
+int 64
+==
+assert
+byte 0x7b521e60f64ab56ff03ddfb26df49be54b20672b7acfffc1adeb256b554ccb25
+txna ApplicationArgs 1
+keccak256
+concat
+keccak256
+txna ApplicationArgs 4
+btoi
+txna ApplicationArgs 2
+txna ApplicationArgs 3
+ecdsa_pk_recover Secp256k1
+store 1
+store 0
+load 0
+load 1
+concat
+keccak256
+extract 12 20
+txna ApplicationArgs 5
+==
+&&
 assert
 int 1
 return

@@ -11,7 +11,7 @@ class TealApp:
     def __init__(self) -> None:
         TESTNET_ALGOD_RPC = "https://testnet-api.algonode.network"
         ALGOD_TOKEN = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-        mnemonic_1 = open("../wallet_1").read().replace(',', ' ')
+        mnemonic_1 = open("wallet_1").read().replace(',', ' ')
         self.algod_client = algod.AlgodClient(ALGOD_TOKEN, TESTNET_ALGOD_RPC)
         self.sp_func = self.algod_client.suggested_params
         self.on_complete_param = transaction.OnComplete.NoOpOC
@@ -20,6 +20,8 @@ class TealApp:
     
     
     def submit_transaction(self, private_key: str, unsigned_txn: transaction.Transaction):
+        if private_key == '':
+            private_key = self.alice_private_key
         signed_txn = unsigned_txn.sign(private_key)
         txid = self.algod_client.send_transaction(signed_txn)
         print("Signed transaction with txID: {}".format(txid))
@@ -30,6 +32,8 @@ class TealApp:
     
     
     def submit_transaction_group(self, private_key: str, unsigned_txns: List[transaction.Transaction]):
+        if private_key == '':
+            private_key = self.alice_private_key
         gid = transaction.calculate_group_id(unsigned_txns)
         signed_txns = []
         for unsigned in unsigned_txns:
@@ -57,7 +61,7 @@ class TealApp:
             Return(Int(1)), Mode.Application, version=8
         ))
         if write_to_file:
-            open('./compiled_teal/%s' % write_to_file, 'w').write(teal_sentences)
+            open('./contract/compiled_teal/%s' % write_to_file, 'w').write(teal_sentences)
 
         create_app_tx = self.submit_transaction(
             self.alice_private_key, 

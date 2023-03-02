@@ -106,27 +106,7 @@ def mesonMainFunc():
                     ),
                 ],
                 [
-                    Txn.application_args[0] == Bytes("paddingForEcdsa1"),
-                    Approve()
-                ],
-                [
-                    Txn.application_args[0] == Bytes("paddingForEcdsa2"),
-                    Approve()
-                ],
-                [
-                    Txn.application_args[0] == Bytes("paddingForEcdsa3"),
-                    Approve()
-                ],
-                [
-                    Txn.application_args[0] == Bytes("paddingForEcdsa4"),
-                    Approve()
-                ],
-                [
-                    Txn.application_args[0] == Bytes("paddingForEcdsa5"),
-                    Approve()
-                ],
-                [
-                    Txn.application_args[0] == Bytes("paddingForEcdsa6"),
+                    Txn.application_args[0] == Bytes("padding"),
                     Approve()
                 ],
             ),
@@ -139,7 +119,7 @@ if __name__ == "__main__":
     from test_run import TealApp
 
     ta = TealApp()
-    open("./compiled_teal/%s" % "meson.teal", "w").write(
+    open("./contract/compiled_teal/%s" % "meson.teal", "w").write(
         compileTeal(mesonMainFunc(), Mode.Application, version=8)
     )
     # ta.create_app(mesonPoolsMainFunc, 'mesonpools.teal', [5, 5, 0, 0])

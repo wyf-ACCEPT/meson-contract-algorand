@@ -2,11 +2,11 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l60
+bnz main_l54
 txn OnCompletion
 int OptIn
 ==
-bnz main_l59
+bnz main_l53
 txn OnCompletion
 int CloseOut
 ==
@@ -18,7 +18,7 @@ txn OnCompletion
 int DeleteApplication
 ==
 ||
-bnz main_l58
+bnz main_l52
 txn OnCompletion
 int NoOp
 ==
@@ -28,69 +28,48 @@ main_l5:
 txna ApplicationArgs 0
 byte "addSupportToken"
 ==
-bnz main_l57
+bnz main_l51
 txna ApplicationArgs 0
 byte "depositAndRegister"
 ==
-bnz main_l53
+bnz main_l47
 txna ApplicationArgs 0
 byte "deposit"
 ==
-bnz main_l49
+bnz main_l43
 txna ApplicationArgs 0
 byte "withdraw"
 ==
-bnz main_l45
+bnz main_l39
 txna ApplicationArgs 0
 byte "postSwap"
 ==
-bnz main_l41
+bnz main_l35
 txna ApplicationArgs 0
 byte "bondSwap"
 ==
-bnz main_l40
+bnz main_l34
 txna ApplicationArgs 0
 byte "lock"
 ==
-bnz main_l39
+bnz main_l33
 txna ApplicationArgs 0
 byte "release"
 ==
-bnz main_l33
+bnz main_l27
 txna ApplicationArgs 0
 byte "executeSwap"
 ==
-bnz main_l23
+bnz main_l17
 txna ApplicationArgs 0
-byte "paddingForEcdsa1"
+byte "padding"
 ==
-bnz main_l22
-txna ApplicationArgs 0
-byte "paddingForEcdsa2"
-==
-bnz main_l21
-txna ApplicationArgs 0
-byte "paddingForEcdsa3"
-==
-bnz main_l20
-txna ApplicationArgs 0
-byte "paddingForEcdsa4"
-==
-bnz main_l19
+bnz main_l16
 err
-main_l19:
+main_l16:
 int 1
 return
-main_l20:
-int 1
-return
-main_l21:
-int 1
-return
-main_l22:
-int 1
-return
-main_l23:
+main_l17:
 txna ApplicationArgs 1
 box_get
 store 19
@@ -160,14 +139,14 @@ txn FirstValidTime
 int 3600
 +
 <
-bnz main_l32
+bnz main_l26
 txna ApplicationArgs 1
 byte 0x111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 box_put
-main_l25:
+main_l19:
 txna ApplicationArgs 5
 btoi
-bnz main_l31
+bnz main_l25
 txna ApplicationArgs 1
 extract 31 1
 btoi
@@ -181,12 +160,12 @@ int 255
 &&
 int 1
 ==
-bnz main_l30
+bnz main_l24
 txna ApplicationArgs 1
 extract 1 5
 btoi
 store 22
-main_l28:
+main_l22:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -204,18 +183,18 @@ itxn_field AssetReceiver
 load 22
 itxn_field AssetAmount
 itxn_submit
-main_l29:
+main_l23:
 int 1
 return
-main_l30:
+main_l24:
 txna ApplicationArgs 1
 extract 1 5
 btoi
 int 1000000000000
 *
 store 22
-b main_l28
-main_l31:
+b main_l22
+main_l25:
 load 17
 extract 0 32
 byte "MesonLP:"
@@ -246,13 +225,13 @@ extract 1 5
 btoi
 +
 app_local_put
-b main_l29
-main_l32:
+b main_l23
+main_l26:
 txna ApplicationArgs 1
 box_del
 assert
-b main_l25
-main_l33:
+b main_l19
+main_l27:
 txna ApplicationArgs 1
 txna ApplicationArgs 5
 concat
@@ -349,8 +328,8 @@ int 64
 int 0
 >
 !
-bnz main_l38
-main_l34:
+bnz main_l32
+main_l28:
 txna ApplicationArgs 1
 extract 28 1
 btoi
@@ -364,10 +343,10 @@ int 255
 &&
 int 1
 ==
-bnz main_l37
+bnz main_l31
 load 10
 store 16
-main_l36:
+main_l30:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -386,13 +365,13 @@ itxn_field AssetAmount
 itxn_submit
 int 1
 return
-main_l37:
+main_l31:
 load 10
 int 1000000000000
 *
 store 16
-b main_l36
-main_l38:
+b main_l30
+main_l32:
 load 10
 txna ApplicationArgs 1
 extract 1 5
@@ -433,8 +412,8 @@ int 10000
 /
 +
 app_global_put
-b main_l34
-main_l39:
+b main_l28
+main_l33:
 txna ApplicationArgs 1
 extract 26 2
 btoi
@@ -577,7 +556,7 @@ concat
 box_put
 int 1
 return
-main_l40:
+main_l34:
 txna ApplicationArgs 1
 box_get
 store 7
@@ -595,7 +574,7 @@ txn Sender
 box_replace
 int 1
 return
-main_l41:
+main_l35:
 txna ApplicationArgs 1
 extract 0 1
 btoi
@@ -692,12 +671,12 @@ int 255
 &&
 int 1
 ==
-bnz main_l44
+bnz main_l38
 txna ApplicationArgs 1
 extract 1 5
 btoi
 store 5
-main_l43:
+main_l37:
 int 1
 gtxns TypeEnum
 int axfer
@@ -745,15 +724,15 @@ concat
 box_put
 int 1
 return
-main_l44:
+main_l38:
 txna ApplicationArgs 1
 extract 1 5
 btoi
 int 1000000000000
 *
 store 5
-b main_l43
-main_l45:
+b main_l37
+main_l39:
 txn Sender
 byte "MesonLP:"
 byte "TokenIndex:"
@@ -812,11 +791,11 @@ int 255
 &&
 int 1
 ==
-bnz main_l48
+bnz main_l42
 txna ApplicationArgs 1
 btoi
 store 2
-main_l47:
+main_l41:
 itxn_begin
 int axfer
 itxn_field TypeEnum
@@ -829,14 +808,14 @@ itxn_field AssetAmount
 itxn_submit
 int 1
 return
-main_l48:
+main_l42:
 txna ApplicationArgs 1
 btoi
 int 1000000000000
 *
 store 2
-b main_l47
-main_l49:
+b main_l41
+main_l43:
 txna ApplicationArgs 1
 btoi
 int 0
@@ -859,11 +838,11 @@ int 255
 &&
 int 1
 ==
-bnz main_l52
+bnz main_l46
 txna ApplicationArgs 1
 btoi
 store 1
-main_l51:
+main_l45:
 int 1
 gtxns TypeEnum
 int axfer
@@ -915,14 +894,14 @@ btoi
 app_local_put
 int 1
 return
-main_l52:
+main_l46:
 txna ApplicationArgs 1
 btoi
 int 1000000000000
 *
 store 1
-b main_l51
-main_l53:
+b main_l45
+main_l47:
 txna ApplicationArgs 1
 btoi
 int 0
@@ -945,11 +924,11 @@ int 255
 &&
 int 1
 ==
-bnz main_l56
+bnz main_l50
 txna ApplicationArgs 1
 btoi
 store 0
-main_l55:
+main_l49:
 int 1
 gtxns TypeEnum
 int axfer
@@ -1003,14 +982,18 @@ btoi
 app_local_put
 int 1
 return
-main_l56:
+main_l50:
 txna ApplicationArgs 1
 btoi
 int 1000000000000
 *
 store 0
-b main_l55
-main_l57:
+b main_l49
+main_l51:
+txn Sender
+global CreatorAddress
+==
+assert
 txna ApplicationArgs 1
 btoi
 int 256
@@ -1074,12 +1057,12 @@ itxn_field AssetAmount
 itxn_submit
 int 1
 return
-main_l58:
+main_l52:
 int 0
 return
-main_l59:
+main_l53:
 int 1
 return
-main_l60:
+main_l54:
 int 1
 return
