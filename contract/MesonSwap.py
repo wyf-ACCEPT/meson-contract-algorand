@@ -49,12 +49,40 @@ def postSwap(
 
 
 # Step 1.2: After user called `postSwap`, the lp should call `bondSwap`.
-def bondSwap(encodedSwap: Bytes):
+def bondSwap(encodedSwap: Bytes) -> Int:
     return Seq(
         postedSwap_get := App.box_get(encodedSwap),
         Assert(postedSwap_get.hasValue()),
         Assert(itemFromPosted("lp", postedSwap_get.value()) == cp.ZERO_ADDRESS),
         App.box_replace(encodedSwap, Int(0), Txn.sender()),
+        Approve(),
+    )
+
+
+# Step [extra].
+def cancelSwap(encodedSwap: Bytes) -> Int:
+    expireTs = decodeSwap("expireTs", encodedSwap)
+    amount = decodeSwap("amount", encodedSwap)
+    tokenIndexIn = decodeSwap("inToken", encodedSwap)
+    assetIdIn = getAssetId(tokenIndexIn)
+    postedSwap = ScratchVar(TealType.bytes)
+    initiator = itemFromPosted("initiator", postedSwap.load())
+
+    postedSwap_value = Seq(
+        postedSwap_get := App.box_get(encodedSwap),
+        Assert(postedSwap_get.hasValue()),
+        postedSwap_get.value(),
+    )
+    conditions = And(
+        postedSwap.load() != cp.POSTED_SWAP_EXPIRE,
+        expireTs < Txn.first_valid_time(),
+        App.box_delete(encodedSwap),
+    )
+    
+    return Seq(
+        postedSwap.store(postedSwap_value),
+        Assert(conditions),
+        safeTransfer(assetIdIn, initiator, amount, tokenIndexIn),
         Approve(),
     )
 
@@ -103,6 +131,7 @@ def executeSwap(
     )
 
 
+
 # ------------------------------------ Main Program of Swap ------------------------------------
 def mesonSwapMainFunc():
     return Cond(
@@ -144,6 +173,10 @@ def mesonSwapMainFunc():
                 [
                     Txn.application_args[0] == Bytes("bondSwap"),
                     bondSwap(Txn.application_args[1]),
+                ],
+                [
+                    Txn.application_args[0] == Bytes("cancelSwap"),
+                    cancelSwap(Txn.application_args[1]),
                 ],
                 [
                     Txn.application_args[0] == Bytes("executeSwap"),

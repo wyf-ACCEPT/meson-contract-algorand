@@ -96,6 +96,37 @@ def lock(
     )
 
 
+# Step [extra].
+def unlock(
+    encodedSwap: Bytes,
+    initiator: Bytes,  # This is an etheruem address
+) -> Int:
+    lockAmount = decodeSwap("amount", encodedSwap) - decodeSwap("feeForLP", encodedSwap)
+    tokenIndexOut = decodeSwap("outToken", encodedSwap)
+    assetIdOut = getAssetId(tokenIndexOut)
+    swapId = getSwapId(encodedSwap, initiator)
+    lockedSwap = ScratchVar(TealType.bytes)
+    lp = itemFromLocked("lp", lockedSwap.load())
+    until = itemFromLocked("until", lockedSwap.load())
+
+    conditions = And(
+        lockedSwap.load() != cp.LOCKED_SWAP_FINISH,
+        until < Txn.first_valid_time(),
+        App.box_delete(swapId),
+    )
+    
+    return Seq(
+        lockedSwap.store(Seq(
+            lockedSwap_get := App.box_get(swapId),
+            Assert(lockedSwap_get.hasValue()),
+            lockedSwap_get.value(),
+        )),
+        Assert(conditions),
+        updateBalanceOfPool(lp, assetIdOut, poolTokenBalance(lp, tokenIndexOut) + lockAmount),
+        Approve(),
+    )
+
+
 # Step 3.
 def release(
     encodedSwap: Bytes,
@@ -147,6 +178,7 @@ def release(
         safeTransfer(assetIdOut, recipient.load(), releaseAmount.load(), tokenIndexOut),
         Approve(),
     )
+
 
 
 # ------------------------------------ Main Program of Pools ------------------------------------
