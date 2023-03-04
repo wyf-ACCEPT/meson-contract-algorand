@@ -1,8 +1,8 @@
 from pyteal import *
 
 from MesonTokens import addSupportToken
-from MesonSwap import postSwap, bondSwap, executeSwap
-from MesonPools import lock, release, depositAndRegister, deposit, withdraw
+from MesonSwap import postSwap, bondSwap, cancelSwap, executeSwap
+from MesonPools import lock, unlock, release, depositAndRegister, deposit, withdraw
 
 
 def initMainContract() -> Int:
@@ -74,6 +74,10 @@ def mesonMainFunc():
                     bondSwap(Txn.application_args[1]),
                 ],
                 [
+                    Txn.application_args[0] == Bytes("cancelSwap"),
+                    cancelSwap(Txn.application_args[1]),
+                ],
+                [
                     Txn.application_args[0] == Bytes("lock"),
                     lock(
                         Txn.application_args[1],
@@ -83,6 +87,13 @@ def mesonMainFunc():
                         Txn.application_args[5],
                         Txn.accounts[1],
                     ),
+                ],
+                [
+                    Txn.application_args[0] == Bytes("unlock"),
+                    unlock(
+                        Txn.application_args[1],
+                        Txn.application_args[2],
+                    )
                 ],
                 [
                     Txn.application_args[0] == Bytes("release"),

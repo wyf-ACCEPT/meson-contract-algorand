@@ -222,6 +222,13 @@ def mesonPoolsMainFunc():
                     ),
                 ],
                 [
+                    Txn.application_args[0] == Bytes("unlock"),
+                    unlock(
+                        Txn.application_args[1],
+                        Txn.application_args[2],
+                    )
+                ],
+                [
                     Txn.application_args[0] == Bytes("release"),
                     release(
                         Txn.application_args[1],
