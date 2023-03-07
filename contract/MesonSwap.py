@@ -212,77 +212,77 @@ if __name__ == "__main__":
         compileTeal(mesonSwapMainFunc(), Mode.Application, version=8)
     )
     
-    def get_expire_ts(delay=90):   # default to 90 minutes
-        return int(time.time()) + 60*delay
+#     def get_expire_ts(delay=90):   # default to 90 minutes
+#         return int(time.time()) + 60*delay
 
-    def build_encoded(amount: int, expireTs: int, outToken, inToken, 
-                    salt='c00000000000e7552620', fee='0000000000', return_bytes=True):
-        assert amount < 0x1111111111
-        version = '01'
-        amount_string = hex(amount)[2:].rjust(10, '0')
-        expireTs_string = hex(expireTs)[2:].rjust(10, '0')
-        outChain = '011b'
-        inChain = '011b'
-        encoded_string = ''.join([
-            '0x', version, amount_string, salt, fee, expireTs_string, outChain, outToken, inChain, inToken
-        ])
-        return bytes.fromhex(encoded_string[2:]) if return_bytes else encoded_string
+#     def build_encoded(amount: int, expireTs: int, outToken, inToken, 
+#                     salt='c00000000000e7552620', fee='0000000000', return_bytes=True):
+#         assert amount < 0x1111111111
+#         version = '01'
+#         amount_string = hex(amount)[2:].rjust(10, '0')
+#         expireTs_string = hex(expireTs)[2:].rjust(10, '0')
+#         outChain = '011b'
+#         inChain = '011b'
+#         encoded_string = ''.join([
+#             '0x', version, amount_string, salt, fee, expireTs_string, outChain, outToken, inChain, inToken
+#         ])
+#         return bytes.fromhex(encoded_string[2:]) if return_bytes else encoded_string
 
-    def keccak256(bytes_str):
-        keccak_func = keccak.new(digest_bits=256)
-        hash_value = keccak_func.update(bytes.fromhex(bytes_str) if type(bytes_str) == str else bytes_str)
-        return hash_value.hexdigest()
+#     def keccak256(bytes_str):
+#         keccak_func = keccak.new(digest_bits=256)
+#         hash_value = keccak_func.update(bytes.fromhex(bytes_str) if type(bytes_str) == str else bytes_str)
+#         return hash_value.hexdigest()
 
-    request_type = "bytes32 Sign to request a swap on Meson (Testnet)"
-    release_type = "bytes32 Sign to release a swap on Meson (Testnet)address Recipient"
-    request_typehash = bytes.fromhex('7b521e60f64ab56ff03ddfb26df49be54b20672b7acfffc1adeb256b554ccb25')
-    release_typehash = bytes.fromhex('d23291d9d999318ac3ed13f43ac8003d6fbd69a4b532aeec9ffad516010a208c')
+#     request_type = "bytes32 Sign to request a swap on Meson (Testnet)"
+#     release_type = "bytes32 Sign to release a swap on Meson (Testnet)address Recipient"
+#     request_typehash = bytes.fromhex('7b521e60f64ab56ff03ddfb26df49be54b20672b7acfffc1adeb256b554ccb25')
+#     release_typehash = bytes.fromhex('d23291d9d999318ac3ed13f43ac8003d6fbd69a4b532aeec9ffad516010a208c')
 
-    amount_transfer = 50 * 1_000_000
-    phil_private_key = '4719806c5b87c68e046b7b958d4416f66ff752ce60a36d28c0b9c5f29cbc9ab0'
-    initiator = phil_address = bytes.fromhex('2ef8a51f8ff129dbb874a0efb021702f59c1b211')
-    encodedSwap = build_encoded(amount_transfer, get_expire_ts(), '02', '01')
+#     amount_transfer = 50 * 1_000_000
+#     phil_private_key = '4719806c5b87c68e046b7b958d4416f66ff752ce60a36d28c0b9c5f29cbc9ab0'
+#     initiator = phil_address = bytes.fromhex('2ef8a51f8ff129dbb874a0efb021702f59c1b211')
+#     encodedSwap = build_encoded(amount_transfer, get_expire_ts(), '02', '01')
         
-    digest_request = bytes.fromhex(keccak256(request_typehash + bytes.fromhex(keccak256(encodedSwap))))
-    signed_message = w3.eth.account._sign_hash(digest_request, phil_private_key)
-    r_int, s_int, v = signed_message.r, signed_message.s, signed_message.v - 27
-    r, s = int.to_bytes(r_int, 32, 'big'), int.to_bytes(s_int, 32, 'big')
+#     digest_request = bytes.fromhex(keccak256(request_typehash + bytes.fromhex(keccak256(encodedSwap))))
+#     signed_message = w3.eth.account._sign_hash(digest_request, phil_private_key)
+#     r_int, s_int, v = signed_message.r, signed_message.s, signed_message.v - 27
+#     r, s = int.to_bytes(r_int, 32, 'big'), int.to_bytes(s_int, 32, 'big')
     
-    usdc_index = 160363393
-    usdt_index = 160363405
+#     usdc_index = 160363393
+#     usdt_index = 160363405
     
-    on_complete_param = transaction.OnComplete.NoOpOC
+#     on_complete_param = transaction.OnComplete.NoOpOC
     
-    ta.create_app(mesonSwapMainFunc, 'mesonswap.teal', [12, 12, 0, 0])
+#     ta.create_app(mesonSwapMainFunc, 'mesonswap.teal', [12, 12, 0, 0])
     
-    ta.submit_transaction('', transaction.PaymentTxn(
-        ta.alice_address, ta.sp_func(), ta.application_address, 400_000,
-    ))
-    ta.submit_transaction('', transaction.ApplicationCallTxn(
-        ta.alice_address, ta.sp_func(), ta.application_index, on_complete_param,
-        app_args=['addSupportToken', 1], foreign_assets=[usdc_index]
-    ))
-    print("Meson App Optin USDC success!\n")
-    ta.submit_transaction('', transaction.ApplicationCallTxn(
-        ta.alice_address, ta.sp_func(), ta.application_index, on_complete_param,
-        app_args=['addSupportToken', 2], foreign_assets=[usdt_index]
-    ))
-    print("Meson App Optin USDT success!\n")
+#     ta.submit_transaction('', transaction.PaymentTxn(
+#         ta.alice_address, ta.sp_func(), ta.application_address, 400_000,
+#     ))
+#     ta.submit_transaction('', transaction.ApplicationCallTxn(
+#         ta.alice_address, ta.sp_func(), ta.application_index, on_complete_param,
+#         app_args=['addSupportToken', 1], foreign_assets=[usdc_index]
+#     ))
+#     print("Meson App Optin USDC success!\n")
+#     ta.submit_transaction('', transaction.ApplicationCallTxn(
+#         ta.alice_address, ta.sp_func(), ta.application_index, on_complete_param,
+#         app_args=['addSupportToken', 2], foreign_assets=[usdt_index]
+#     ))
+#     print("Meson App Optin USDT success!\n")
     
-    # ta.call_app(['optIn'])
-    meson_index = ta.application_index
-    meson_address = ta.application_address
-    ta.submit_transaction_group('', [
-    transaction.ApplicationCallTxn(
-        ta.alice_address, ta.sp_func(), meson_index, on_complete_param,
-        app_args=['postSwap', encodedSwap, r, s, v, initiator],
-        boxes=[(meson_index, encodedSwap)]
-    ),
-    transaction.AssetTransferTxn(
-        ta.alice_address, ta.sp_func(), meson_address, amount_transfer, usdc_index
-    ),
-    *[transaction.ApplicationCallTxn(
-        ta.alice_address, ta.sp_func(), meson_index, on_complete_param,
-        app_args=['padding', padding_num]
-    ) for padding_num in range(7)],
-])
+#     # ta.call_app(['optIn'])
+#     meson_index = ta.application_index
+#     meson_address = ta.application_address
+#     ta.submit_transaction_group('', [
+#     transaction.ApplicationCallTxn(
+#         ta.alice_address, ta.sp_func(), meson_index, on_complete_param,
+#         app_args=['postSwap', encodedSwap, r, s, v, initiator],
+#         boxes=[(meson_index, encodedSwap)]
+#     ),
+#     transaction.AssetTransferTxn(
+#         ta.alice_address, ta.sp_func(), meson_address, amount_transfer, usdc_index
+#     ),
+#     *[transaction.ApplicationCallTxn(
+#         ta.alice_address, ta.sp_func(), meson_index, on_complete_param,
+#         app_args=['padding', padding_num]
+#     ) for padding_num in range(7)],
+# ])
