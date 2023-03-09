@@ -118,21 +118,24 @@ main = async () => {
     // [r, s, v] = sign_request(encoded_bytes, initiator_private_key)
     // console.log(r, s, v)
 
-    function decode_algorand_address(algo_addr) {
-        let buffer_address = new Buffer.from(base32Decode(algo_addr, 'RFC4648').slice(0, -4))
-        let hex_address = buffer_address.reduce((accumulator, currentValue) => { 
-            return accumulator + currentValue.toString(16).padStart(2, '0') 
-        }, '')
-        return hex_address
-    }
+    // function decode_algorand_address(algo_addr) {
+    //     let buffer_address = new Buffer.from(base32Decode(algo_addr, 'RFC4648').slice(0, -4))
+    //     let hex_address = buffer_address.reduce((accumulator, currentValue) => { 
+    //         return accumulator + currentValue.toString(16).padStart(2, '0') 
+    //     }, '')
+    //     return hex_address
+    // }
 
-    r = decode_algorand_address('GZ4IJXXNRFT23E6SLUOSSUWN2LUDFQTX4F6SXF5EP27LFWTOWHPFANLYIQ')
-    console.log(r)
+    // r = decode_algorand_address('GZ4IJXXNRFT23E6SLUOSSUWN2LUDFQTX4F6SXF5EP27LFWTOWHPFANLYIQ')
+    // console.log(r)
     // console.log(base32Decode)
 
     // def decode_algorand_address(algo_addr):
     // return base64.b32decode(algo_addr + '======')[:-4]
 
+
+    // ------------------------ convert timestamp ------------------------
+    // new Date(0x0064095c29 * 1e3)
 }
 
 main()

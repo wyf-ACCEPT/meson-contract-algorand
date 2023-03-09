@@ -1,7 +1,7 @@
 require('dotenv').config()
 const base32Decode = require('base32-decode')
-const { readFileSync, readdir } = require('fs')
-const { Wallet, SigningKey, utils, recoverAddress, keccak256, assert } = require('ethers')
+const { readFileSync } = require('fs')
+const { Wallet, keccak256, assert } = require('ethers')
 const { Algodv2, Indexer, OnApplicationComplete, mnemonicToSecretKey, waitForConfirmation, assignGroupID, makePaymentTxnWithSuggestedParams, makeApplicationCreateTxn, getApplicationAddress, makeApplicationCallTxnFromObject, makeApplicationOptInTxn, makeAssetTransferTxnWithSuggestedParamsFromObject } = require("algosdk")
 
 
@@ -22,13 +22,17 @@ class Utils {
         this.listToUint8ArrayList = this.listToUint8ArrayList.bind(this)
         this.submit_transaction = this.submit_transaction.bind(this)
         this.submit_transaction_group = this.submit_transaction_group.bind(this)
+        this.sign_request = this.sign_request.bind(this)
+        this.sign_release = this.sign_release.bind(this)
+        this.show_boxes = this.show_boxes.bind(this)
 
         // accounts
         this.alice = this.load_mnemonic(process.env.WALLET_1)
         this.bob = this.load_mnemonic(process.env.WALLET_2)
         this.carol = this.load_mnemonic(process.env.WALLET_3)
         this.initiator_wallet = new Wallet(process.env.INITIATOR_PRIVATE_KEY)
-        this.initiator_address = this.initiator_wallet.address
+        this.initiator_address = this.initiator_wallet.address.slice(2)
+        this.initiator_buffer = Buffer.from(this.initiator_address, 'hex')
 
         // read contract code
         this.meson_contract_code = readFileSync(
@@ -53,8 +57,9 @@ class Utils {
     listToUint8ArrayList(list) {
         let arraylist = []
         for (var obj of list) {
-            if (typeof (obj) == 'number') arraylist.push(this.intToUint8Array(obj, 8))
-            else if (typeof (obj) == 'string') arraylist.push(this.encoder.encode(obj))
+            if (typeof obj == 'number') arraylist.push(this.intToUint8Array(obj, 8))
+            else if (typeof obj == 'string') arraylist.push(this.encoder.encode(obj))
+            else if (Buffer.isBuffer(obj)) arraylist.push(new Uint8Array(obj))
             else throw new Error("Wrong type!")
         }
         return arraylist
@@ -88,11 +93,20 @@ class Utils {
         else return hash_hexstring
     }
 
-    decode_algorand_address(algo_addr) {
-        let buffer_address = new Buffer.from(base32Decode(algo_addr, 'RFC4648').slice(0, -4))
-        let hex_address = buffer_address.reduce((accumulator, currentValue) => {
+    buffer_to_hex(buffer) {
+        return buffer.reduce((accumulator, currentValue) => {
             return accumulator + currentValue.toString(16).padStart(2, '0')
         }, '')
+    }
+
+    hex_timestamp_to_date(timestamp_hex) {
+        if (timestamp_hex == '1111111111') return '[Closed]'
+        return new Date(parseInt(timestamp_hex, 16) * 1e3)
+    }
+
+    decode_algorand_address(algo_addr) {
+        let buffer_address = new Buffer.from(base32Decode(algo_addr, 'RFC4648').slice(0, -4))
+        let hex_address = this.buffer_to_hex(buffer_address)
         return hex_address
     }
 
@@ -113,7 +127,7 @@ class Utils {
         ).slice(2), 'hex')
         let sig = this.initiator_wallet.signingKey.sign(digest_release)
         return [Buffer.from(sig.r.slice(2), 'hex'), Buffer.from(sig.s.slice(2), 'hex'), sig.v - 27]
-    } 
+    }
 
     async sp_func() {
         return await this.client.getTransactionParams().do()
@@ -158,6 +172,40 @@ class Utils {
         let compile_response = await this.client.compile(this.encoder.encode(source_code)).do()
         return new Uint8Array(Buffer.from(compile_response.result, "base64"))
     }
+
+    async show_boxes(meson_index, is_in_chain) {
+        if (is_in_chain == true) {
+            console.log("Meson App boxes (encodedSwap -> postedValue): ")
+            let box_res = await this.client.getApplicationBoxes(meson_index).do()
+            for (let box of box_res.boxes) {
+                let encoded_key = box.name
+                let posted_value = (await this.client.getApplicationBoxByName(meson_index, encoded_key).do()).value
+                if (posted_value.length == 84)
+                    console.log(
+                        `[EncodedSwap] %s, \n\t-> [PostedValue] (lp, initiator, from_address): \n\t\t\t(%s, \n\t\t\t%s, \n\t\t\t%s)`,
+                        this.buffer_to_hex(encoded_key),
+                        this.buffer_to_hex(posted_value.slice(0, 32)),
+                        this.buffer_to_hex(posted_value.slice(32, 52)),
+                        this.buffer_to_hex(posted_value.slice(52)),
+                    )
+            }
+        } else {
+            console.log("Meson App boxes (swapId -> lockedValue): ")
+            let box_res = await this.client.getApplicationBoxes(meson_index).do()
+            for (let box of box_res.boxes) {
+                let swapid_key = box.name
+                let locked_value = (await this.client.getApplicationBoxByName(meson_index, swapid_key).do()).value
+                if (locked_value.length == 69)
+                    console.log(
+                        `[SwapID] %s, \n\t-> [LockedValue] (lp, until, recipient): \n\t\t\t(%s, \n\t\t\t%s, \n\t\t\t%s)`,
+                        this.buffer_to_hex(swapid_key),
+                        this.buffer_to_hex(locked_value.slice(0, 32)),
+                        this.hex_timestamp_to_date(this.buffer_to_hex(locked_value.slice(32, 37))),
+                        this.buffer_to_hex(locked_value.slice(37)),
+                    )
+            }
+        }
+    }
 }
 
 
@@ -169,26 +217,8 @@ main = async () => {
 
     const transfer_to_app_amount = 400_000
     const lp_deposit_amount = 125 * 1_000_000
-    const { alice, bob, carol, encoder, usdc_index, usdt_index, on_complete_param, listToUint8ArrayList, submit_transaction, submit_transaction_group, sp_func, build_encoded, get_swapID, get_expire_ts } = utils
+    const { alice, bob, carol, usdc_index, usdt_index, on_complete_param, initiator_buffer, initiator_address, listToUint8ArrayList, submit_transaction, submit_transaction_group, sp_func, build_encoded, get_swapID, get_expire_ts, sign_request, sign_release, show_boxes } = utils
 
-    // returned = indexer_client.lookup_account_application_local_state(bob_address, application_id=meson_index)
-    // balances_saved = returned['apps-local-states'][0]['key-value']
-    // print("LP(Bob) balance:")
-    // for balance in balances_saved:
-    //     print("Asset %d: %d" % (int.from_bytes(de64(balance['key'])[8:], 'big'), balance['value']['uint'] / 1e6))
-    // let returned = await utils.indexer.lookupAccountAppLocalStates(bob.addr).do()
-    // console.log(returned)
-    // console.log(await utils.indexer.lookupAccountTransactions(alice.addr).do())
-    // console.log(await utils.indexer.lookupAccountAssets(alice.addr).do())
-    // console.log(await utils.indexer.lookupAccountAppLocalStates(usdc_index, address=alice.addr).do())
-    // console.log(await utils.indexer.makeHealthCheck().do())
-
-    // // /indexer/javascript/AccountInfo.js
-    // await utils.indexer.lookupAccountByID(alice.addr).do().catch(e => {
-    //     console.log(e);
-    //     console.trace();
-    // });
-    // curl https://testnet-idx.algonode.network:8980/v2/accounts/XIU7HGGAJ3QOTATPDSIIHPFVKMICXKHMOR2FJKHTVLII4FAOA3CYZQDLG4/apps-local-state
 
 
 
@@ -209,16 +239,15 @@ main = async () => {
     console.log(`Create Meson Contract success! App id: ${meson_index}, App Address: ${meson_address}\n`)
 
 
-    console.log("================== 1.2 Transfer to Meson ==================")
+    console.log("\n================== 1.2 Transfer to Meson ==================")
     await submit_transaction(alice.sk, makePaymentTxnWithSuggestedParams(
         alice.addr, meson_address, transfer_to_app_amount, undefined, undefined, await sp_func()
     ))
     console.log("Transfer $ALGO to Meson app success!")
-    console.log(`App ${meson_index} balance: ${await utils.client.accountInformation(meson_address).do().amount / 1e6
-        } ALGO.\n`)
+    console.log(`App ${meson_index} balance: ${(await utils.client.accountInformation(meson_address).do()).amount / 1e6} ALGO.\n`)
 
 
-    console.log("================== 1.3 Add USDC and USDT ==================")
+    console.log("\n================== 1.3 Add USDC and USDT ==================")
     await submit_transaction(alice.sk, makeApplicationCallTxnFromObject({
         from: alice.addr,
         suggestedParams: await sp_func(),
@@ -251,7 +280,7 @@ main = async () => {
     console.log("LP(Bob) opt in Meson App success!\n")
 
 
-    console.log("================== 2.2 LP deposit to App ==================")
+    console.log("\n================== 2.2 LP deposit to App ==================")
     await submit_transaction_group(bob.sk, [
         makeApplicationCallTxnFromObject({
             from: bob.addr,
@@ -297,16 +326,157 @@ main = async () => {
     // --------------------------------------------------------------------------------------------
     console.log("\n# 3 Swap! #")
 
-    // console.log("================== 3.1  ==================")
-    // const amount_transfer = 50 * 1_000_000
-    // let encoded_hexstring = build_encoded(amount_transfer, get_expire_ts(), '02', '01', false)
-    // let encoded_bytes = Buffer.from(encoded_hexstring, 'hex')
-    // console.log(encoded_hexstring)
+    console.log("================== 3.0 Init ==================")
 
-    // const initiator = '2ef8a51f8ff129dbb874a0efb021702f59c1b211'
-    // let swapId = get_swapID(encoded_hexstring, initiator, false)
-    // console.log(swapId)
+    // let meson_index = 162573802                                 // if needed
+    // let meson_address = getApplicationAddress(meson_index)      // if needed
 
+    const amount_swap = 3 * 1_000_000
+    const encoded_hexstring = build_encoded(amount_swap, get_expire_ts(), '02', '01', false)
+    const encoded_bytes = Buffer.from(encoded_hexstring, 'hex')
+    console.log(`EncodedSwap: ${encoded_hexstring}`)
+
+
+    console.log("\n\n================== 3.1 PostSwap & BondSwap ==================")
+
+    let [r, s, v] = sign_request(encoded_hexstring)
+    console.log("Complete request signing!")
+
+    let postSwap_group = [
+        makeApplicationCallTxnFromObject({
+            from: carol.addr,
+            suggestedParams: await sp_func(),
+            appIndex: meson_index,
+            onComplete: on_complete_param,
+            appArgs: listToUint8ArrayList(['postSwap', encoded_bytes, r, s, v, initiator_buffer]),
+            boxes: [{
+                appIndex: meson_index,
+                name: new Uint8Array(encoded_bytes),
+            }],
+        }),
+        makeAssetTransferTxnWithSuggestedParamsFromObject({
+            from: carol.addr,
+            suggestedParams: await sp_func(),
+            to: meson_address,
+            amount: amount_swap,
+            assetIndex: usdc_index,
+        }),
+    ]
+    for (let pad_index = 0; pad_index < 7; pad_index++)
+        postSwap_group.push(makeApplicationCallTxnFromObject({
+            from: carol.addr,
+            suggestedParams: await sp_func(),
+            appIndex: meson_index,
+            onComplete: on_complete_param,
+            appArgs: listToUint8ArrayList(['padding', pad_index]),
+        }))
+    await submit_transaction_group(carol.sk, postSwap_group)
+    console.log("Step 1.1. User(Carol) posted swap success!\n")
+
+    await submit_transaction(bob.sk, makeApplicationCallTxnFromObject({
+        from: bob.addr,
+        suggestedParams: await sp_func(),
+        appIndex: meson_index,
+        onComplete: on_complete_param,
+        appArgs: listToUint8ArrayList(['bondSwap', encoded_bytes]),
+        boxes: [{
+            appIndex: meson_index,
+            name: new Uint8Array(encoded_bytes),
+        }],
+    }))
+    console.log("Step 1.2. LP(Bob) Bonded swap success!\n")
+    await show_boxes(meson_index, true)
+
+
+    console.log("\n\n================== 3.2 Lock ==================")
+
+    let lock_group = [
+        makeApplicationCallTxnFromObject({
+            from: bob.addr,
+            suggestedParams: await sp_func(),
+            appIndex: meson_index,
+            onComplete: on_complete_param,
+            appArgs: listToUint8ArrayList(['lock', encoded_bytes, r, s, v, initiator_buffer]),
+            accounts: [carol.addr],
+            boxes: [{
+                appIndex: meson_index,
+                name: new Uint8Array(get_swapID(encoded_hexstring, initiator_address)),
+            }],
+        }),
+    ]
+    for (let pad_index = 0; pad_index < 8; pad_index++)
+        lock_group.push(makeApplicationCallTxnFromObject({
+            from: bob.addr,
+            suggestedParams: await sp_func(),
+            appIndex: meson_index,
+            onComplete: on_complete_param,
+            appArgs: listToUint8ArrayList(['padding', pad_index]),
+        }))
+    await submit_transaction_group(bob.sk, lock_group)
+    console.log("Step 2. LP(Bob) lock assets success!\n")
+    await show_boxes(meson_index, false)
+
+
+    console.log("\n\n================== 3.3 Release ==================")
+
+    let [r2, s2, v2] = sign_release(encoded_hexstring, carol.addr)
+    console.log("Complete release signing!")
+
+    let release_group = [
+        makeApplicationCallTxnFromObject({
+            from: carol.addr,
+            suggestedParams: await sp_func(),
+            appIndex: meson_index,
+            onComplete: on_complete_param,
+            appArgs: listToUint8ArrayList(['release', encoded_bytes, r2, s2, v2, initiator_buffer]),
+            foreignAssets: [usdt_index],
+            boxes: [{
+                appIndex: meson_index,
+                name: new Uint8Array(get_swapID(encoded_hexstring, initiator_address)),
+            }],
+        }),
+    ]
+    for (let pad_index = 0; pad_index < 8; pad_index++)
+        release_group.push(makeApplicationCallTxnFromObject({
+            from: carol.addr,
+            suggestedParams: await sp_func(),
+            appIndex: meson_index,
+            onComplete: on_complete_param,
+            appArgs: listToUint8ArrayList(['padding', pad_index]),
+        }))
+    await submit_transaction_group(carol.sk, release_group)
+    console.log("Step 3. User(Carol) release assets success!\n")
+    await show_boxes(meson_index, false)
+
+
+    console.log("\n\n================== 3.4 ExecuteSwap ==================")
+
+    let executeSwap_group = [
+        makeApplicationCallTxnFromObject({
+            from: bob.addr,
+            suggestedParams: await sp_func(),
+            appIndex: meson_index,
+            onComplete: on_complete_param,
+            appArgs: listToUint8ArrayList(['executeSwap', encoded_bytes, r2, s2, v2, 1]),
+            accounts: [carol.addr],
+            foreignAssets: [usdc_index],
+            boxes: [{
+                appIndex: meson_index,
+                name: new Uint8Array(encoded_bytes),
+            }],
+        }),
+    ]
+    for (let pad_index = 0; pad_index < 7; pad_index++)
+        executeSwap_group.push(makeApplicationCallTxnFromObject({
+            from: bob.addr,
+            suggestedParams: await sp_func(),
+            appIndex: meson_index,
+            onComplete: on_complete_param,
+            appArgs: listToUint8ArrayList(['padding', pad_index]),
+        }))
+    await submit_transaction_group(bob.sk, executeSwap_group)
+    console.log("Step 4. LP(Bob) executeSwap success!\n")
+    await show_boxes(meson_index, true)
 
 }
 

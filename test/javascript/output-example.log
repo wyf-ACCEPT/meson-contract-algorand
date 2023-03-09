@@ -1,0 +1,122 @@
+/usr/local/nodejs/bin/node ./test/javascript/meson-test.js
+========================== Account Balance Info ==========================
+Alice GZ4IJXXNRFT23E6SLUOSSUWN2LUDFQTX4F6SXF5EP27LFWTOWHPFANLYIQ balance: 54.606993
+Bob   CIK3P7U4PZBJESWQ3XFDCZDXEZ3JZLWY6XZHY4A4KEJCA5SYYIPBT6W7Y4 balance: 15.196008
+Carol K7ZJP3J7SYYNB42DPZMRY56X32HVTYOOZRA2ASE2IND4LSQKCL3CE2Z2YU balance: 8.875
+
+
+# 1 Create App #
+================== 1.1 Create Meson App ==================
+Signed transaction with txID: OUDLCGOTWD2N6GWBNO5N4ZGMJDX5UCKODMNOMYGJ5UKJY2U3QT7A
+Confirmed on round 28273854!
+
+Create Meson Contract success! App id: 162594759, App Address: P5GCXT4XLHCHXXHH6WYWKOEZH2QRKOAKY55OAIDDLDXVZLGF3ONUQ6ZMKM
+
+
+================== 1.2 Transfer to Meson ==================
+Signed transaction with txID: 2LDR4I3A4JRNCBVKEUOW5PM6WZKXFBBSBZKYFJWU2FGM7SYLQUMQ
+Confirmed on round 28273856!
+
+Transfer $ALGO to Meson app success!
+App 162594759 balance: 0.4 ALGO.
+
+
+================== 1.3 Add USDC and USDT ==================
+Signed transaction with txID: I72K2R3Y3MYIKXVIIDUCQ65M6RQBAYOLI5MAAQ7CWUTRNPN2ZQ4Q
+Confirmed on round 28273858!
+
+Meson App Optin USDC success!
+
+Signed transaction with txID: AYDJD6XORLGITMM2NSCARB3KLVBHXRAANYRLZFK3QFTXWRSOO3WA
+Confirmed on round 28273860!
+
+Meson App Optin USDT success!
+
+
+# 2 LP deposit #
+================== 2.1 LP Opt in App ==================
+Signed transaction with txID: MJMBS5EWOSLVERKLHC5RS4B7FHOLW2CJIVW6RMJQO63UXE4W4ECQ
+Confirmed on round 28273862!
+
+LP(Bob) opt in Meson App success!
+
+
+================== 2.2 LP deposit to App ==================
+Signed transaction with txID: EHWWY6Y6QPB7NM6BYZBDNMW4A4QSM3LJFHNEN5HULPJJN6HJZXRQ
+Confirmed on round 28273864!
+
+LP(Bob) deposit 125 mUSDC into Meson App!
+
+Signed transaction with txID: DLMLL4XHQ4GHZKRAWJ6A374S6STEI4H2IM3OHPJ6DE3BTI3UBSVQ
+Confirmed on round 28273866!
+
+LP(Bob) deposit 125 mUSDT into Meson App!
+[TODO] Cannot use indexer to see local state correctly!
+
+
+# 3 Swap! #
+================== 3.0 Init ==================
+EncodedSwap: 0100002dc6c0c00000000000e755262000000000000064098f3d011b02011b01
+
+
+================== 3.1 PostSwap & BondSwap ==================
+Complete request signing!
+Signed transaction with txID: 2VMYC6UQTVYIIAF72JLSNNU4WX6LDFYH5P4LKTABBEXQK3BKQZPQ
+Confirmed on round 28273869!
+
+Step 1.1. User(Carol) posted swap success!
+
+Signed transaction with txID: AS2FPI3A5RPGO6K2TDL37PVXRFA4PO4DDLUOXSYTLT3FI2YHIYSA
+Confirmed on round 28273871!
+
+Step 1.2. LP(Bob) Bonded swap success!
+
+Meson App boxes (encodedSwap -> postedValue): 
+[EncodedSwap] 0100002dc6c0c00000000000e755262000000000000064098f3d011b02011b01, 
+	-> [PostedValue] (lp, initiator, from_address): 
+			(1215b7fe9c7e42924ad0ddca31647726769caed8f5f27c701c5112207658c21e, 
+			2ef8a51f8ff129dbb874a0efb021702f59c1b211, 
+			57f297ed3f9630d0f3437e591c77d7de8f59e1cecc41a0489a4347c5ca0a12f6)
+
+
+================== 3.2 Lock ==================
+Signed transaction with txID: 4SOQXDJRXACMUWWAKTCW6SOCITMMPQM5CAL432LKYXMOG5Z4DYMA
+Confirmed on round 28273874!
+
+Step 2. LP(Bob) lock assets success!
+
+Meson App boxes (swapId -> lockedValue): 
+[SwapID] f49dcc5452eee4f65764b6a4890e739763239577dbee56513e629e4294b4cdcd, 
+	-> [LockedValue] (lp, until, recipient): 
+			(1215b7fe9c7e42924ad0ddca31647726769caed8f5f27c701c5112207658c21e, 
+			Thu Mar 09 2023 14:38:24 GMT+0800 (China Standard Time), 
+			57f297ed3f9630d0f3437e591c77d7de8f59e1cecc41a0489a4347c5ca0a12f6)
+
+
+================== 3.3 Release ==================
+Complete release signing!
+Signed transaction with txID: 5JV2C7IUONQWNN62ZFYFDDDUSZVJ2MT4FBKLIL4WYIQSF2ENQFMQ
+Confirmed on round 28273877!
+
+Step 3. User(Carol) release assets success!
+
+Meson App boxes (swapId -> lockedValue): 
+[SwapID] f49dcc5452eee4f65764b6a4890e739763239577dbee56513e629e4294b4cdcd, 
+	-> [LockedValue] (lp, until, recipient): 
+			(1111111111111111111111111111111111111111111111111111111111111111, 
+			[Closed], 
+			1111111111111111111111111111111111111111111111111111111111111111)
+
+
+================== 3.4 ExecuteSwap ==================
+Signed transaction with txID: 63SRNAWVXWENH3P23QWK6XHBD5LBK4Q5SRBI753NYLKH3K5UWV5Q
+Confirmed on round 28273880!
+
+Step 4. LP(Bob) executeSwap success!
+
+Meson App boxes (encodedSwap -> postedValue): 
+[EncodedSwap] 0100002dc6c0c00000000000e755262000000000000064098f3d011b02011b01, 
+	-> [PostedValue] (lp, initiator, from_address): 
+			(1111111111111111111111111111111111111111111111111111111111111111, 
+			1111111111111111111111111111111111111111, 
+			1111111111111111111111111111111111111111111111111111111111111111)
