@@ -1,9 +1,9 @@
-require('dotenv').config()
+const { dotenv } = require('dotenv')
 const base32Decode = require('base32-decode')
 const { readFileSync } = require('fs')
 const { Wallet, keccak256, assert } = require('ethers')
 const { Algodv2, Indexer, OnApplicationComplete, mnemonicToSecretKey, waitForConfirmation, assignGroupID, makePaymentTxnWithSuggestedParams, makeApplicationCreateTxn, getApplicationAddress, makeApplicationCallTxnFromObject, makeApplicationOptInTxn, makeAssetTransferTxnWithSuggestedParamsFromObject } = require("algosdk")
-
+dotenv.config()
 
 class Utils {
     constructor() {
