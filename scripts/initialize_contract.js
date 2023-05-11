@@ -6,22 +6,23 @@ const {
   getApplicationAddress,
 } = require('algosdk')
 const { writeFileSync, readFileSync } = require('fs')
-dotenv.config()
-
 const { AlgorandUtils } = require('./algorand_utils')
+dotenv.config()
 
 initialize()
 
+// Deploy the contract and opt in USDC & USDT. Save the appId and appAddress to `metadata.json`.
 async function initialize() {
-  const transfer_to_app_amount = 400_000
   const metadata = JSON.parse(readFileSync('./scripts/metadata.json'))
   const { usdc_index, usdt_index } = metadata
 
   const utils = new AlgorandUtils()
-  const { alice, bob, carol, on_complete_param, initiator_buffer, initiator_address, listToUint8ArrayList, submit_transaction, submit_transaction_group, sp_func, build_encoded, get_swapID, get_expire_ts, sign_request, sign_release, show_boxes } = utils
+  const { alice, on_complete_param, listToUint8ArrayList, submit_transaction, sp_func } = utils
   await utils.show_account_info()
 
+  const transfer_to_app_amount = 400_000
 
+  
   console.log("================== 1.1 Create Meson App ==================")
   let blank_program = await utils.compile_program('#pragma version 8\nint 1\nreturn')
   let meson_program = await utils.compile_program(utils.meson_contract_code)
