@@ -12,32 +12,35 @@
 
 
 const dotenv = require('dotenv')
-// const fs = require('fs')
+dotenv.config()
+
+const presets = require('./mock/mock_presets')
+
 // const { fromB64 } = require('@mysten/sui.js')
 // const { utils } = require('ethers')
-// const { adaptors } = require('@mesonfi/sdk')
-// const presets = require('@mesonfi/presets').default
-// const { Meson } = require('@mesonfi/contract-abis')
 
-dotenv.config()
 
 const {
     ALGOD_TOKEN, TESTNET_ALGOD_RPC, TESTNET_INDEXER_RPC,
     WALLET_1, WALLET_2, WALLET_3, INITIATOR_PRIVATE_KEY
 } = process.env
 
-// const testnetMode = Boolean(TESTNET_MODE)
-// const networkId = testnetMode ? 'sui-testnet' : 'sui'
-// presets.useTestnet(testnetMode)
+const testnetMode = true
+const networkId = testnetMode ? 'algorand-testnet' : 'algorand-mainnet'
+presets.useTestnet(testnetMode)
 
 initialize()
 
 async function initialize() {
+
+    console.log(ALGOD_TOKEN)
+    console.log(presets.getNetwork('algorand-testnet'))
+    console.log(presets.createNetworkClient('algorand-testnet'))
 //   const keystore = fs.readFileSync(path.join(__dirname, '../.sui/sui.keystore'))
 //   const privateKey = utils.hexlify(fromB64(JSON.parse(keystore)[0])).replace('0x00', '0x')
 
-//   const network = presets.getNetwork(networkId)
-//   const client = presets.createNetworkClient(networkId, [network.url])
+  const network = presets.getNetwork(networkId)
+  const client = presets.createNetworkClient(networkId)
 //   const wallet = adaptors.getWallet(privateKey, client)
 
 //   const { mesonAddress } = parseDeployed()
