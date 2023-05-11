@@ -1,94 +1,73 @@
-// const presets = require('@mesonfi/presets').default
-// const { 
-//     adaptors,
-//     MesonClient,
-//     EthersWalletSwapSigner,
-//     SignedSwapRequest,
-//     SignedSwapRelease,
-//  } = require('@mesonfi/sdk')
-// const { ERC20, Meson } = require('@mesonfi/contract-abis')
-
-
-
-
 const dotenv = require('dotenv')
+const { 
+  makeApplicationCreateTxn, 
+  makeApplicationCallTxnFromObject,
+  makePaymentTxnWithSuggestedParams,
+  getApplicationAddress,
+} = require('algosdk')
+const { writeFileSync, readFileSync } = require('fs')
 dotenv.config()
 
-const presets = require('./mock/mock_presets')
-
-// const { fromB64 } = require('@mysten/sui.js')
-// const { utils } = require('ethers')
-
-
-const {
-    ALGOD_TOKEN, TESTNET_ALGOD_RPC, TESTNET_INDEXER_RPC,
-    WALLET_1, WALLET_2, WALLET_3, INITIATOR_PRIVATE_KEY
-} = process.env
-
-const testnetMode = true
-const networkId = testnetMode ? 'algorand-testnet' : 'algorand-mainnet'
-presets.useTestnet(testnetMode)
+const { AlgorandUtils } = require('./algorand_utils')
 
 initialize()
 
 async function initialize() {
+  const transfer_to_app_amount = 400_000
+  const metadata = JSON.parse(readFileSync('./scripts/metadata.json'))
+  const { usdc_index, usdt_index } = metadata
 
-    console.log(ALGOD_TOKEN)
-    console.log(presets.getNetwork('algorand-testnet'))
-    console.log(presets.createNetworkClient('algorand-testnet'))
-//   const keystore = fs.readFileSync(path.join(__dirname, '../.sui/sui.keystore'))
-//   const privateKey = utils.hexlify(fromB64(JSON.parse(keystore)[0])).replace('0x00', '0x')
+  const utils = new AlgorandUtils()
+  const { alice, bob, carol, on_complete_param, initiator_buffer, initiator_address, listToUint8ArrayList, submit_transaction, submit_transaction_group, sp_func, build_encoded, get_swapID, get_expire_ts, sign_request, sign_release, show_boxes } = utils
+  await utils.show_account_info()
 
-  const network = presets.getNetwork(networkId)
-  const client = presets.createNetworkClient(networkId)
-//   const wallet = adaptors.getWallet(privateKey, client)
 
-//   const { mesonAddress } = parseDeployed()
-//   console.log('Deployed to:', mesonAddress)
-//   let mesonInstance = adaptors.getContract(mesonAddress, Meson.abi, wallet)
+  console.log("================== 1.1 Create Meson App ==================")
+  let blank_program = await utils.compile_program('#pragma version 8\nint 1\nreturn')
+  let meson_program = await utils.compile_program(utils.meson_contract_code)
 
-//   const coins = testnetMode
-//     ? [{ symbol: 'USDC', tokenIndex: 1 }, { symbol: 'USDT', tokenIndex: 2 }]
-//     : network.tokens
+  let create_app_tx = await submit_transaction(alice.sk, makeApplicationCreateTxn(
+    alice.addr, await sp_func(), on_complete_param, meson_program, blank_program,
+    6, 0, 12, 0, undefined, undefined, undefined, undefined, undefined, undefined,
+    undefined, 1, undefined
+  ))
+  let meson_index = create_app_tx['application-index']
+  let meson_address = getApplicationAddress(meson_index)
+  console.log(`Create Meson Contract success! App id: ${meson_index}, App Address: ${meson_address}\n`)
 
-//   for (const coin of coins) {
-//     const coinAddr = testnetMode ? `${mesonAddress}::${coin.symbol}::${coin.symbol}` : coin.addr
-//     console.log(`addSupportToken (${coinAddr})`)
-//     const tx = await mesonInstance.addSupportToken(coinAddr, coin.tokenIndex)
-//     await tx.wait()
-//   }
 
-//   if (LP_PRIVATE_KEY) {
-//     const lp = adaptors.getWallet(LP_PRIVATE_KEY, client)
-//     console.log('LP address:', lp.address)
+  console.log("\n================== 1.2 Transfer to Meson ==================")
+  await submit_transaction(alice.sk, makePaymentTxnWithSuggestedParams(
+    alice.addr, meson_address, transfer_to_app_amount, undefined, undefined, await sp_func()
+  ))
+  console.log("Transfer $ALGO to Meson app success!")
+  console.log(`App ${meson_index} balance: ${(await utils.client.accountInformation(meson_address).do()).amount / 1e6} ALGO.\n`)
 
-//     const tx = await mesonInstance.call(
-//       `${mesonAddress}::MesonStates::transferPremiumManager`,
-//       (txb, metadata) => ({ arguments: [txb.object(lp.address), txb.object(metadata.storeG)] })
-//     )
-//     console.log(`transferPremiumManager: ${tx.hash}`)
-//     await tx.wait()
 
-//     mesonInstance = mesonInstance.connect(lp)
-//   }
+  console.log("\n================== 1.3 Add USDC and USDT ==================")
+  await submit_transaction(alice.sk, makeApplicationCallTxnFromObject({
+    from: alice.addr,
+    suggestedParams: await sp_func(),
+    appIndex: meson_index,
+    onComplete: on_complete_param,
+    appArgs: listToUint8ArrayList(['addSupportToken', 1]),
+    foreignAssets: [usdc_index],
+  }))
+  console.log("Meson App Optin USDC success!\n")
+  await submit_transaction(alice.sk, makeApplicationCallTxnFromObject({
+    from: alice.addr,
+    suggestedParams: await sp_func(),
+    appIndex: meson_index,
+    onComplete: on_complete_param,
+    appArgs: listToUint8ArrayList(['addSupportToken', 2]),
+    foreignAssets: [usdt_index],
+  }))
+  console.log("Meson App Optin USDT success!\n")
 
-//   if (!AMOUNT_TO_DEPOSIT) {
-//     return
-//   }
 
-//   for (const coin of coins) {
-//     console.log(`Depositing ${AMOUNT_TO_DEPOSIT} ${coin.symbol}...`)
-//     const value = utils.parseUnits(AMOUNT_TO_DEPOSIT, 6)
-//     const poolIndex = await mesonInstance.poolOfAuthorizedAddr(lp.address)
-//     const needRegister = poolIndex == 0
-//     const poolTokenIndex = coin.tokenIndex * 2**40 + (needRegister ? 1 : poolIndex)
+  console.log("\n================== 1.4 Saved to metadata.json ==================")
+  writeFileSync('./scripts/metadata.json', JSON.stringify(
+    { meson_index, meson_address, ...metadata })
+  )
 
-//     let tx
-//     if (needRegister) {
-//       tx = await mesonInstance.depositAndRegister(value, poolTokenIndex)
-//     } else {
-//       tx = await mesonInstance.deposit(value, poolTokenIndex)
-//     }
-//     await tx.wait()
-//   }
 }
