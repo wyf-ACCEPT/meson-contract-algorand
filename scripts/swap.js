@@ -15,7 +15,7 @@ async function swap() {
   const { usdc_index, usdt_index, meson_index, meson_address } = metadata
 
   const utils = new AlgorandUtils()
-  const { alice, bob, carol, on_complete_param, initiator_buffer, initiator_address, listToUint8ArrayList, submit_transaction, submit_transaction_group, sp_func, build_encoded, get_swapID, get_expire_ts, sign_request, sign_release, show_boxes } = utils
+  const { bob, carol, on_complete_param, initiator_buffer, initiator_address, listToUint8ArrayList, submit_transaction, submit_transaction_group, sp_func, build_encoded, get_swapID, get_expire_ts, sign_request, sign_release, show_boxes } = utils
 
   const amount_swap = parseInt((7 + Math.random() * 3) * 1_000_000)
   const encoded_hexstring = build_encoded(amount_swap, get_expire_ts(), '02', '01', false)
