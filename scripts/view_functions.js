@@ -19,11 +19,8 @@ async function main() {
 
 
 
-  // const connection = new Connection({ fullnode: SUI_NODE_URL, faucet: SUI_FAUCET_URL })
-  // const provider = new JsonRpcProvider(connection)
-
-  console.log("\ngetSupportedTokens: ")
-  await getSupportedTokens(client, meson_index)
+  console.log("\ngetSupportedTokens: ");
+  (await getSupportedTokens(client, meson_index))
     .map(line => console.log(line))
 
   // console.log("\nownerOfPoolList (Overall): ")
