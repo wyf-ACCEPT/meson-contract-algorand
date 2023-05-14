@@ -22,16 +22,9 @@ async function main() {
   // const connection = new Connection({ fullnode: SUI_NODE_URL, faucet: SUI_FAUCET_URL })
   // const provider = new JsonRpcProvider(connection)
 
-  // const metadata = {
-  //   ...await get_metadata(DEPLOY_DIGEST),
-  //   storeC: {
-  //     USDC: '0x009bc7a4d710535342c3549d6e74ca7313b7a92b99f42ffb87b3fe83efece30d',
-  //     USDT: '0xef41108ef7c8832bee9898dbecbd17d83e25e31d4985f646661e350b1f3afc86',
-  //   }
-  // }
-
-  // console.log("\ngetSupportedTokens: ")
-  // console.log(await getSupportedTokens(provider, metadata))
+  console.log("\ngetSupportedTokens: ")
+  await getSupportedTokens(client, meson_index)
+    .map(line => console.log(line))
 
   // console.log("\nownerOfPoolList (Overall): ")
   // console.log(await ownerOfPoolList(provider, metadata))
@@ -88,31 +81,29 @@ async function main() {
   // global states
   var r = await client.getApplicationByID(meson_index).do()
 
-
-  console.log(r)
-
 }
 
 
-// function arrayToHex(u8ar) {
-//   return '0x' + u8ar.map(byte => byte.toString(16).padStart(2, '0')).join('')
-// }
+async function getSupportedTokens(provider, meson_index) {
+  const global_states_raw = (await provider.getApplicationByID(meson_index).do()).params["global-state"]
+
+  const supported_coins_list = await Promise.all(
+    global_states_raw
+      .filter(state => Buffer.from(state.key, 'base64').toString().includes('AssetId'))
+      .map(async state => {
+        const assetId = parseInt(Buffer.from(state.key, 'base64').toString('hex').slice(16), 16)
+        const tokenIndex = state.value.uint
+        const assetInfo = (await provider.getAssetByID(assetId).do()).params
+        const [name, symbol] = [assetInfo['name'], assetInfo['unit-name']]
+        return { assetId, tokenIndex, name, symbol };
+      })
+  )
+
+  return supported_coins_list
+}
 
 
-// async function getSupportedTokens(provider, metadata) {
-//   const supported_coins_raw = (await provider.getDynamicFields({
-//     parentId: metadata.storeG_content.supported_coins.fields.id.id
-//   })).data
 
-//   const supported_coins_list = await Promise.all(supported_coins_raw.map(async coin_raw => ({
-//     tokenId: coin_raw.name.value,
-//     tokenName: (await provider.getObject(
-//       { id: coin_raw.objectId, options: { showContent: true } }
-//     )).data.content.fields.value.fields.name
-//   })))
-
-//   return supported_coins_list
-// }
 
 
 // async function ownerOfPoolList(provider, metadata) {
